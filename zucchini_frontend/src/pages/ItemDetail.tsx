@@ -1,155 +1,65 @@
 import styled from "styled-components";
 import watch from "../assets/images/watch.png";
+import female from "../assets/images/female.jpg";
+import Modal from "../components/Common/Modal";
+import { useState } from "react";
+import Calendar from "react-calendar";
+import GoBackButton from "../components/Button/GoBackButton";
 
 export default function ItemDetail() {
-  const ContainerDiv = styled.div`
-    display: flex;
-    flex-direction: column;
-    padding: 5rem;
-    margin: 0 10rem 13rem 10rem;
-    font-family: "IBM Plex Sans KR", sans-serif;
-  `;
+  const [isOpen, setIsOpen] = useState(false);
 
-  const StyledSvg = styled.svg`
-    height: 1.5rem;
-    width: 1.5rem;
-    cursor: pointer;
-    color: #849c80;
-    margin-bottom: 1rem;
-  `;
-
-  const RedSvg = styled.svg`
-    height: 1rem;
-    width: 1rem;
-  `;
-
-  const UpperDiv = styled.div`
-    height: 35rem;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-  `;
-
-  const LowerDiv = styled.div`
-    display: flex;
-    height: 11rem;
-  `;
-
-  const LowerLeftDiv = styled.div`
-    width: 50%;
-    height: 100%;
-    background-color: #d8d8d8;
-    border-radius: 0.4rem;
-    margin-top: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  `;
-
-  const AlertTitle = styled.span`
-    font-weight: 700;
-    font-size: 1rem;
-    margin: 0.3rem 0 0.6rem 0;
-  `;
-
-  const AlertSvg = styled.svg`
-    color: #ff6600;
-  `;
-
-  const LowerRightDiv = styled.div`
-    width: 50%;
-    height: 100%;
-    padding: 1rem 1rem 0 1rem;
-  `;
-
-  const UpperLeftDiv = styled.div`
-    width: 50%;
-  `;
-
-  const UpperRightDiv = styled.div`
-    width: 50%;
-    padding: 1rem 1rem 0 1rem;
-    display: flex;
-    flex-direction: column;
-  `;
-
-  const StyledImg = styled.img`
-    height: 100%;
-    width: 100%;
-  `;
-
-  const CategorySpan = styled.span`
-    font-size: 0.9rem;
-  `;
-
-  const TitleSpan = styled.span`
-    font-size: 2rem;
-    font-weight: 500;
-    line-height: 2.3rem;
-    margin: 0.5rem 0;
-  `;
-
-  const ContentSpan = styled.span`
-    line-height: 1.3rem;
-    margin-bottom: 1.5rem;
-  `;
-
-  const PriceSpan = styled.span`
-    font-weight: 500;
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
-  `;
-
-  const SubSpan = styled.span`
-    color: gray;
-    margin-bottom: 0.5rem;
-  `;
-
-  const StyledBtn = styled.button`
-    height: 3rem;
-    background-color: #cde990;
-    border: transparent;
-    color: #254021;
-    border-radius: 0.4rem;
-    cursor: pointer;
-    margin-top: 0.15rem;
-  `;
-
-  const NoticeSpan = styled.span`
-    margin-bottom: 0.3rem;
-  `;
-
-  const SellerDiv = styled.div`
-    display: flex;
-    height: 100%;
-    width: 100%;
-  `;
-
-  const SellerImg = styled.img`
-    width: 50%;
-  `;
-
-  const SellerSpanDiv = styled.div`
-    width: 50%;
-  `;
-
+  const toggle = () => {
+    setIsOpen(!isOpen);
+  };
   return (
     <ContainerDiv>
-      <StyledSvg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke-width="1.5"
-        stroke="currentColor"
-        className="w-6 h-6"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M15.75 19.5L8.25 12l7.5-7.5"
-        />
-      </StyledSvg>
+      <Modal isOpen={isOpen} toggle={toggle}>
+        <ModalDiv>
+          <StyledSvg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            className="w-6 h-6"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </StyledSvg>
+        </ModalDiv>
+        <ModalSpan>화상통화 일정 선택</ModalSpan>
+        <SubSpan>일정은 하루만 선택 가능합니다</SubSpan>
+        <CalendarDiv>
+          <Calendar
+            formatDay={(locale, date) =>
+              date.toLocaleString("en", { day: "numeric" })
+            }
+          />
+        </CalendarDiv>
+        <StyledBtn>확인</StyledBtn>
+        <StyledBtn>취소</StyledBtn>
+      </Modal>
+      <GoBackButton />
+      <SvgButton>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="red"
+          className="w-6 h-6"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+          />
+        </svg>
+      </SvgButton>
       <UpperDiv>
         <UpperLeftDiv>
           <StyledImg src={watch}></StyledImg>
@@ -190,8 +100,8 @@ export default function ItemDetail() {
               />
             </RedSvg>
           </SubSpan>
-          <StyledBtn>채팅하기</StyledBtn>
-          <StyledBtn>일정 선택하기</StyledBtn>
+          <SelectBtn>채팅하기</SelectBtn>
+          <SelectBtn onClick={toggle}>일정 선택하기</SelectBtn>
         </UpperRightDiv>
       </UpperDiv>
       <LowerDiv>
@@ -211,15 +121,239 @@ export default function ItemDetail() {
           <NoticeSpan>신고하기 버튼을 눌러 신고해주시기 바랍니다.</NoticeSpan>
         </LowerLeftDiv>
         <LowerRightDiv>
-          <span>판매자 정보</span>
+          <SellerTitle>판매자 정보</SellerTitle>
           <SellerDiv>
-            <SellerImg></SellerImg>
+            <SellerImg src={female}></SellerImg>
             <SellerSpanDiv>
-              <span></span>
+              <SellerName>백조이김</SellerName>
+              <span>Lv.1 애호박씨앗</span>
+              <SubSpan>판매중 3 · 거래완료 2</SubSpan>
             </SellerSpanDiv>
+            <SelectDiv>
+              <StatusSelect>
+                <option>판매중</option>
+                <option>예약중</option>
+                <option>판매완료</option>
+              </StatusSelect>
+            </SelectDiv>
           </SellerDiv>
         </LowerRightDiv>
       </LowerDiv>
     </ContainerDiv>
   );
 }
+const ContainerDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding: 5rem;
+  margin: 0 10rem 13rem 10rem;
+  font-family: "IBM Plex Sans KR", sans-serif;
+`;
+
+const StyledSvg = styled.svg`
+  height: 1.5rem;
+  width: 1.5rem;
+  cursor: pointer;
+  color: #849c80;
+  margin-bottom: 1rem;
+`;
+
+const RedSvg = styled.svg`
+  height: 1rem;
+  width: 1rem;
+`;
+
+const UpperDiv = styled.div`
+  height: 35rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+`;
+
+const LowerDiv = styled.div`
+  display: flex;
+  height: 11rem;
+`;
+
+const LowerLeftDiv = styled.div`
+  width: 50%;
+  height: 100%;
+  background-color: #d8d8d8;
+  border-radius: 0.4rem;
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+`;
+
+const AlertTitle = styled.span`
+  font-weight: 700;
+  font-size: 1rem;
+  margin: 0.3rem 0 0.6rem 0;
+`;
+
+const AlertSvg = styled.svg`
+  color: #ff6600;
+`;
+
+const LowerRightDiv = styled.div`
+  width: 50%;
+  height: 9.4rem;
+  padding: 1rem 1rem 0 1rem;
+  margin-top: 1.5rem;
+`;
+
+const UpperLeftDiv = styled.div`
+  width: 50%;
+`;
+
+const UpperRightDiv = styled.div`
+  width: 50%;
+  padding: 1rem 1rem 0 1rem;
+  display: flex;
+  flex-direction: column;
+`;
+
+const StyledImg = styled.img`
+  height: 100%;
+  width: 100%;
+`;
+
+const CategorySpan = styled.span`
+  font-size: 0.9rem;
+`;
+
+const TitleSpan = styled.span`
+  height: 4.6rem;
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 2.3rem;
+  margin: 0.5rem 0;
+`;
+
+const ContentSpan = styled.span`
+  line-height: 1.3rem;
+  margin-bottom: 1.5rem;
+  height: 13.6rem;
+`;
+
+const PriceSpan = styled.span`
+  font-weight: 500;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+`;
+
+const SubSpan = styled.span`
+  color: gray;
+  margin-bottom: 0.5rem;
+`;
+
+const SelectBtn = styled.button`
+  height: 3rem;
+  background-color: #cde990;
+  border: transparent;
+  color: #254021;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  margin-top: 0.15rem;
+`;
+
+const NoticeSpan = styled.span`
+  margin-bottom: 0.3rem;
+`;
+
+const SellerDiv = styled.div`
+  display: flex;
+  height: 100%;
+  width: 100%;
+  padding-left: 1rem;
+`;
+
+const SellerImg = styled.img`
+  width: 6.5rem;
+  height: 6.5rem;
+  border-radius: 5rem;
+  border: solid 1px black;
+  margin-top: 1rem;
+`;
+
+const SellerSpanDiv = styled.div`
+  width: 50%;
+  height: 8.6rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 2rem;
+  gap: 0.8rem;
+`;
+
+const SellerTitle = styled.span`
+  font-size: 1.3rem;
+  margin-bottom: 0.3rem;
+  padding-left: 1rem;
+`;
+
+const SellerName = styled.span`
+  font-weight: 700;
+`;
+
+const ModalDiv = styled.div`
+  float: right;
+`;
+
+const ModalSpan = styled.div`
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-top: 3rem;
+  margin-bottom: 0.5rem;
+`;
+
+const CalendarDiv = styled.div`
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+`;
+
+const StyledBtn = styled.button`
+  width: 9rem;
+  height: 2.5rem;
+  background-color: #cde990;
+  border: solid 1px #cde990;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  margin-right: 0.4rem;
+
+  &:hover {
+    background-color: white;
+  }
+`;
+
+const SvgButton = styled.button`
+  position: absolute;
+  right: 17rem;
+  height: 3rem;
+  width: 3rem;
+  background-color: white;
+  border: solid 2px #d3d2d2;
+  border-radius: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  cursor: pointer;
+`;
+
+const StatusSelect = styled.select`
+  height: 3rem;
+  width: 7rem;
+  padding-left: 1rem;
+  border-radius: 0.4rem;
+  font-size: 1rem;
+`;
+
+const SelectDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-bottom: 1rem;
+`;

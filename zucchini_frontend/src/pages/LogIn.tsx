@@ -2,96 +2,22 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
+import { http } from "../utils/axios";
+import { useLogin } from "../hooks/useLogin";
+import FullWidthButton from "../components/Button/FullWidthButton";
 
 export default function LogIn() {
-  const StyledAll = styled.div`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: auto;
-    font-family: "IBM Plex Sans KR", sans-serif;
-  `;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    mode: "onChange",
+  });
+  const { mutate: login } = useLogin();
 
-  const StyledDiv = styled.div`
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    height: auto;
-    width: 20rem;
-    margin: 4rem;
-    text-align: center;
-    padding-top: 3rem;
-  `;
-
-  const StyledTitle = styled.span`
-    font-size: 2.5rem;
-    font-weight: 500;
-    margin: 1rem;
-  `;
-
-  const StyledSpanDiv = styled.div`
-    display: flex;
-    flex-direction: column;
-    margin-top: 0.7rem;
-  `;
-
-  const StyledSpan = styled.span`
-    line-height: 1.3rem;
-    color: gray;
-    font-size: smaller;
-  `;
-
-  const StyledForm = styled.form`
-    display: flex;
-    flex-direction: column;
-    margin-top: 1rem;
-  `;
-
-  const Input = styled.input`
-    height: 3rem;
-    border: none;
-    background-color: #f8f8f8;
-    border-radius: 0.4rem;
-    padding-left: 1rem;
-    margin: 0.3rem;
-  `;
-
-  const StyledButtonDiv = styled.div`
-    display: flex;
-    flex-direction: column;
-    margin-top: 0.7rem;
-  `;
-
-  const StyledButton = styled.button`
-    height: 2.9rem;
-    border: 2px solid #cde990;
-    border-radius: 0.4rem;
-    background-color: white;
-    margin: 0.3rem;
-
-    &:hover {
-      background-color: #cde990;
-      cursor: pointer;
-    }
-  `;
-
-  const StyledLink = styled(Link)`
-    box-sizing: border-box;
-    display: block;
-    padding: 4px 8px;
-    margin: 0 auto;
-    text-align: center;
-    margin-top: 0.7rem;
-    color: blue;
-    font-weight: 600;
-  `;
-
-  const [values, setValues] = useState({ id: "", pw: "" });
-  const { register, handleSubmit } = useForm();
-
-  const onSubmit = (data: any) => {
-    setValues(data);
-    console.log(data);
+  const onSubmit = async (data: any) => {
+    login(data);
   };
 
   return (
@@ -103,10 +29,18 @@ export default function LogIn() {
           <Input
             type="password"
             placeholder="비밀번호"
-            {...register("pw")}
+            {...register("password", {
+              minLength: {
+                value: 7,
+                message: "뭐임?",
+              },
+            })}
           ></Input>
+          {errors?.password && (
+            <span>{errors?.password?.message?.toString()}</span>
+          )}
           <StyledButtonDiv>
-            <StyledButton>로그인</StyledButton>
+            <FullWidthButton>로그인</FullWidthButton>
           </StyledButtonDiv>
         </StyledForm>
         <StyledSpanDiv>
@@ -118,3 +52,97 @@ export default function LogIn() {
     </StyledAll>
   );
 }
+
+interface IUser {
+  id: string;
+  password: string;
+}
+
+async function login(data: any) {
+  const response = await http.post("user/login", data);
+
+  return response;
+}
+
+const StyledAll = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: auto;
+  font-family: "IBM Plex Sans KR", sans-serif;
+`;
+
+const StyledDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: auto;
+  width: 20rem;
+  margin: 4rem;
+  text-align: center;
+  padding-top: 3rem;
+`;
+
+const StyledTitle = styled.span`
+  font-size: 2.5rem;
+  font-weight: 500;
+  margin: 1rem;
+`;
+
+const StyledSpanDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.7rem;
+`;
+
+const StyledSpan = styled.span`
+  line-height: 1.3rem;
+  color: gray;
+  font-size: smaller;
+`;
+
+const StyledForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  margin-top: 1rem;
+`;
+
+const Input = styled.input`
+  height: 3rem;
+  border: none;
+  background-color: #f8f8f8;
+  border-radius: 0.4rem;
+  padding-left: 1rem;
+  margin: 0.3rem;
+`;
+
+const StyledButtonDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.7rem;
+`;
+
+const StyledButton = styled.button`
+  height: 3rem;
+  border: 2px solid #cde990;
+  border-radius: 0.4rem;
+  background-color: white;
+  margin: 0.3rem;
+  font-size: 1rem;
+
+  &:hover {
+    background-color: #cde990;
+    cursor: pointer;
+  }
+`;
+
+const StyledLink = styled(Link)`
+  box-sizing: border-box;
+  display: block;
+  padding: 4px 8px;
+  margin: 0 auto;
+  text-align: center;
+  margin-top: 0.7rem;
+  color: blue;
+  font-weight: 600;
+`;

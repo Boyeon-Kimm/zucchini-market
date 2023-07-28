@@ -1,169 +1,8 @@
 import styled from "styled-components";
 import img from "../assets/images/main.png";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export default function Main() {
-  const navigate = useNavigate();
-
-  const navigateToSignUp = () => {
-    navigate("/signup");
-  };
-
-  const navigateToLogin = () => {
-    navigate("/login");
-  };
-
-  const MainAll = styled.div`
-    font-family: "IBM Plex Sans KR", sans-serif;
-  `;
-
-  const MainUpper = styled.div`
-    height: 38rem;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    background-color: #aacb73;
-  `;
-
-  const MainLower = styled.div`
-    display: flex;
-    justify-content: center;
-    margin-top: 1.5rem;
-  `;
-
-  const LowerDiv = styled.div`
-    height: 38rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-    padding: 2.6rem;
-  `;
-
-  const ContentDiv = styled.div`
-    width: 15rem;
-    height: 20rem;
-    padding: 1rem;
-    margin: 1rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  `;
-
-  const UpperLeft = styled.div`
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 0 6rem;
-  `;
-
-  const TitleDiv = styled.div`
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 0.8rem;
-  `;
-
-  const SpanTitle = styled.span`
-    font-size: 3.3rem;
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-    letter-spacing: 0.1rem;
-  `;
-
-  const SpanContent = styled.span`
-    font-size: 1rem;
-    line-height: 150%;
-  `;
-
-  const BoldSpan = styled.span`
-    line-height: 150%;
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-  `;
-
-  const BtnDiv = styled.div`
-    margin-top: 1rem;
-  `;
-
-  const SignUpBtn = styled.button`
-    width: 8rem;
-    height: 2.5rem;
-    border: none;
-    color: #aacb73;
-    font-weight: 600;
-    border-radius: 2rem;
-    margin-right: 1rem;
-    box-shadow: 0 0 10px white;
-
-    &:hover {
-      cursor: pointer;
-      background-color: #aacb73;
-      border: solid 1px white;
-      color: white;
-    }
-  `;
-
-  const LoginBtn = styled.button`
-    width: 8rem;
-    height: 2.5rem;
-    border: solid 1px white;
-    color: white;
-    background-color: #aacb73;
-    font-weight: 600;
-    border-radius: 2rem;
-
-    &:hover {
-      cursor: pointer;
-      background-color: white;
-      border: solid 1px #aacb73;
-      color: #aacb73;
-    }
-  `;
-
-  const Img = styled.img`
-    width: 40rem;
-    height: 35rem;
-  `;
-
-  const AboutTitle = styled.span`
-    font-size: 2rem;
-    font-weight: 500;
-    margin-bottom: 0.8rem;
-    display: flex;
-    justify-content: center;
-  `;
-
-  const LowerBtn = styled.button`
-    background-color: #ffd4d4;
-    border: none;
-    height: 2.5rem;
-    width: 8rem;
-    border-radius: 2rem;
-    margin-top: 1.5rem;
-
-    &:hover {
-      cursor: pointer;
-      background-color: white;
-      border: solid 2px #ffd4d4;
-    }
-  `;
-
-  const SvgDiv = styled.div`
-    width: 24px;
-    height: 24px;
-    color: #006aff;
-  `;
-
-  const SubDiv = styled.div`
-    min-height: 10rem;
-  `;
-
   return (
     <MainAll>
       <MainUpper>
@@ -185,8 +24,12 @@ export default function Main() {
             </SpanContent>
           </TitleDiv>
           <BtnDiv>
-            <SignUpBtn onClick={navigateToSignUp}>회원가입</SignUpBtn>
-            <LoginBtn onClick={navigateToLogin}>로그인</LoginBtn>
+            <Link to={"/signup"}>
+              <SignUpBtn>회원가입</SignUpBtn>
+            </Link>
+            <Link to={"/login"}>
+              <LoginBtn>로그인</LoginBtn>
+            </Link>
           </BtnDiv>
         </UpperLeft>
         <Img src={img}></Img>
@@ -231,7 +74,9 @@ export default function Main() {
               </SubDiv>
             </div>
             <div>
-              <LowerBtn>영상 목록</LowerBtn>
+              <LowerBtn>
+                <Link to={"/mypage/buy"}>영상 목록</Link>
+              </LowerBtn>
             </div>
           </ContentDiv>
           <ContentDiv>
@@ -261,7 +106,9 @@ export default function Main() {
               </SpanContent>
             </SubDiv>
             <div>
-              <LowerBtn>영상 통화</LowerBtn>
+              <Link to={"/conference"} target={"_blank"}>
+                <LowerBtn>영상 통화</LowerBtn>
+              </Link>
             </div>
           </ContentDiv>
           <ContentDiv>
@@ -293,7 +140,9 @@ export default function Main() {
               </SpanContent>
             </SubDiv>
             <div>
-              <LowerBtn>일정 잡기</LowerBtn>
+              <LowerBtn>
+                <Link to={"/mypage/schedule"}>일정 목록</Link>
+              </LowerBtn>
             </div>
           </ContentDiv>
         </MainLower>
@@ -301,3 +150,156 @@ export default function Main() {
     </MainAll>
   );
 }
+
+const MainAll = styled.div`
+  font-family: "IBM Plex Sans KR", sans-serif;
+`;
+
+const MainUpper = styled.div`
+  height: 38rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  background-color: #aacb73;
+`;
+
+const MainLower = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+`;
+
+const LowerDiv = styled.div`
+  height: 38rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  padding: 2.6rem;
+`;
+
+const ContentDiv = styled.div`
+  width: 15rem;
+  height: 20rem;
+  padding: 1rem;
+  margin: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+`;
+
+const UpperLeft = styled.div`
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 6rem;
+`;
+
+const TitleDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.8rem;
+`;
+
+const SpanTitle = styled.span`
+  font-size: 3.3rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.1rem;
+`;
+
+const SpanContent = styled.span`
+  font-size: 1rem;
+  line-height: 150%;
+`;
+
+const BoldSpan = styled.span`
+  line-height: 150%;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+`;
+
+const BtnDiv = styled.div`
+  margin-top: 1rem;
+`;
+
+const SignUpBtn = styled.button`
+  width: 8rem;
+  height: 2.8rem;
+  border: none;
+  color: #aacb73;
+  font-weight: 600;
+  border-radius: 2rem;
+  margin-right: 1rem;
+  box-shadow: 0 0 10px white;
+  font-size: 1rem;
+
+  &:hover {
+    cursor: pointer;
+    background-color: #aacb73;
+    border: solid 1px white;
+    color: white;
+  }
+`;
+
+const LoginBtn = styled.button`
+  width: 8rem;
+  height: 2.8rem;
+  border: solid 1px white;
+  color: white;
+  background-color: #aacb73;
+  font-weight: 600;
+  border-radius: 2rem;
+  font-size: 1rem;
+
+  &:hover {
+    cursor: pointer;
+    background-color: white;
+    border: solid 1px #aacb73;
+    color: #aacb73;
+  }
+`;
+
+const Img = styled.img`
+  width: 40rem;
+  height: 35rem;
+`;
+
+const AboutTitle = styled.span`
+  font-size: 2rem;
+  font-weight: 500;
+  margin-bottom: 0.8rem;
+  display: flex;
+  justify-content: center;
+`;
+
+const LowerBtn = styled.button`
+  background-color: #ffd4d4;
+  border: none;
+  height: 2.5rem;
+  width: 8rem;
+  border-radius: 2rem;
+  margin-top: 1.5rem;
+
+  &:hover {
+    cursor: pointer;
+    background-color: white;
+    border: solid 2px #ffd4d4;
+  }
+`;
+
+const SvgDiv = styled.div`
+  width: 24px;
+  height: 24px;
+  color: #006aff;
+`;
+
+const SubDiv = styled.div`
+  min-height: 10rem;
+`;

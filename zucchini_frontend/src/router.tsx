@@ -13,7 +13,13 @@ import BuyList from "./pages/BuyList";
 import SellList from "./pages/SellList";
 import ChatList from "./pages/ChatList";
 import ItemDetail from "./pages/ItemDetail";
-import Detail from "./pages/Detail";
+import ChatRoom from "./pages/ChatRoom";
+import Conference from "./pages/Conference";
+import ReplayBuyVideo from "./pages/ReplayBuyVideo";
+import ReplaySellVideo from "./pages/ReplaySellVideo";
+import ScheduleList from "./pages/ScheduleList";
+import UpdateItem from "./pages/UpdateItem";
+import SignUpAgreement from "./pages/SignUpAgreement";
 
 const router = createBrowserRouter([
   {
@@ -21,8 +27,16 @@ const router = createBrowserRouter([
     element: <Root />,
     children: [
       {
+        path: "/",
+        element: <Main />,
+      },
+      {
         path: "/signup",
         element: <SignUp />,
+      },
+      {
+        path: "/signup/agreement",
+        element: <SignUpAgreement />,
       },
       {
         path: "/login",
@@ -33,29 +47,8 @@ const router = createBrowserRouter([
         element: <MyPage />,
       },
       {
-        path: "/myPage/modify",
+        path: "/mypage/modify",
         element: <UpdateUser />,
-      },
-      {
-        path: "/main",
-        element: <Main />,
-      },
-      {
-        path: "/items",
-        element: <ItemList />,
-      },
-
-      {
-        path: "/test",
-        element: <Test />,
-      },
-      {
-        path: "/items/create",
-        element: <CreateItem />,
-      },
-      {
-        path: "/mypage/like",
-        element: <LikeList />,
       },
       {
         path: "/mypage/buy",
@@ -66,16 +59,53 @@ const router = createBrowserRouter([
         element: <SellList />,
       },
       {
+        path: "/mypage/buy/video",
+        element: <ReplayBuyVideo />,
+      },
+      {
+        path: "/mypage/sell/video",
+        element: <ReplaySellVideo />,
+      },
+      {
+        path: "/mypage/schedule",
+        element: <ScheduleList />,
+      },
+      {
+        path: "/mypage/like",
+        element: <LikeList />,
+      },
+      {
         path: "/mypage/chat",
         element: <ChatList />,
       },
       {
-        path: "/items/detail",
-        element: <ItemDetail />,
+        path: "/chat",
+        element: <ChatRoom />,
+      },
+
+      {
+        path: "/item",
+        element: <ItemList />,
       },
       {
         path: "/item/:no",
-        element: <Detail />,
+        element: <ItemDetail />,
+      },
+      {
+        path: "/item/register",
+        element: <CreateItem />,
+      },
+      {
+        path: "/item/:no/modify",
+        element: <UpdateItem />,
+      },
+      {
+        path: "/test",
+        element: <Test />,
+      },
+      {
+        path: "/conference",
+        element: <Conference />,
       },
     ],
   },
