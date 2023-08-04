@@ -1,88 +1,160 @@
 import styled from "styled-components";
 import watch from "../assets/images/watch.png";
-import female from "../assets/images/female.jpg";
+import gradeFive from "../assets/images/5.png";
 import Modal from "../components/Common/Modal";
-import { useState } from "react";
-import Calendar from "react-calendar";
-import GoBackButton from "../components/Button/GoBackButton";
+import { useState, useEffect } from "react";
+import SimpleCalendar from "../components/Schedule/SimpleCalendar";
+import axios from "axios";
+import { QueryClient } from "@tanstack/query-core";
+import { QUERY_KEY } from "../constants/queryKey";
+import { useQueryClient } from "@tanstack/react-query";
+import { useLocation, useNavigate } from "react-router";
+import IToken from "../types/IToken";
+import ClosedButton from "../components/Button/ClosedButton";
+import { motion } from "framer-motion";
 
 export default function ItemDetail() {
   const [isOpen, setIsOpen] = useState(false);
+  const [item, setItem] = useState<any>(); // item 상태 추가
+  const [like, setLike] = useState(false);
+  const navigate = useNavigate();
+  // accessToken필요할 때
+  // const queryClient = useQueryClient();
+
+  const queryClient = useQueryClient();
 
   const toggle = () => {
     setIsOpen(!isOpen);
   };
+
+  const location = useLocation();
+  // 아이템 가져오기
+  useEffect(() => {
+    const getItem = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:8080/api/item/${location.pathname.split("/")[2]}`
+        );
+        console.log(response);
+        setItem(response.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    getItem();
+  }, [location.pathname]);
+
+  const toggleLike = () => {
+    // 좋아요 통신
+    // /api/user/item/like/{itemNo} 좋아요 등록
+    // /api/user/item/like/{itemNo} 좋아요 취소
+    setLike((prev) => !prev);
+
+    //     ax
+    //     if (prev) {
+    //       /api/user/item/like/{itemNo} -post
+    //     } else {
+    //       /api/user/item/like/{itemNo} -delete
+
+    // }
+  };
+
+  const toChatRoom = async () => {
+    try {
+      // 채팅방 생성
+      const response = await axios.post("http://localhost:8080/room", {
+        headers: {
+          Authorization: `Bearer ${
+            (queryClient.getQueryData([QUERY_KEY.user]) as IToken).accessToken
+          }`,
+        },
+      });
+
+      // 응답 확인
+      console.log(response.data);
+
+      // useNavigate를 이용해 채팅방 이동
+      navigate("/chat");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
-    <ContainerDiv>
+    <ContainerDiv
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
       <Modal isOpen={isOpen} toggle={toggle}>
         <ModalDiv>
-          <StyledSvg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            className="w-6 h-6"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </StyledSvg>
+          <ClosedButton onClick={toggle} />
         </ModalDiv>
         <ModalSpan>화상통화 일정 선택</ModalSpan>
-        <SubSpan>일정은 하루만 선택 가능합니다</SubSpan>
+        <SubSpan>일정은 상품당 한 번씩만 선택 가능합니다</SubSpan>
         <CalendarDiv>
-          <Calendar
-            formatDay={(locale, date) =>
-              date.toLocaleString("en", { day: "numeric" })
-            }
-          />
+          <SimpleCalendar />
         </CalendarDiv>
-        <StyledBtn>확인</StyledBtn>
-        <StyledBtn>취소</StyledBtn>
       </Modal>
-      <GoBackButton />
-      <SvgButton>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.5"
-          stroke="red"
-          className="w-6 h-6"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-          />
-        </svg>
-      </SvgButton>
+      {/* <GoBackButton onClick={toPrev}/> */}
+      <div>
+        <SvgButton onClick={toggleLike}>
+          {like ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="red"
+              className="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+              />
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="red"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="red"
+              className="w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+              />
+            </svg>
+          )}
+        </SvgButton>
+      </div>
       <UpperDiv>
         <UpperLeftDiv>
+          {/* src 태그 안에 제품 사진 */}
           <StyledImg src={watch}></StyledImg>
         </UpperLeftDiv>
         <UpperRightDiv>
-          <CategorySpan>전자제품</CategorySpan>
-          <TitleSpan>갤럭시북2 프로 360 32GB, 1TB 최고 사양</TitleSpan>
-          <ContentSpan>
-            갤럭시북2 프로 360(NT950QED-KD72S) 최고 사양 풀박스 판매합니다. -
-            CPU: 코어 i7-1260P(12세대) - 화면크기: 15.6인치 - RAM: 32GB - SSD:
-            NVMe 1TB - GPU: Iris Xe Graphics - 운영체제: Windows 11 Home - 기타:
-            360도 회전, 터치스크린, S펜 등 - 최초 활성화: 2022.10.16 - 배터리:
-            100% - 구성품: 풀박스(젠더, 파우치, 마우스, S펜 등) 한글 2022 정품,
-            MS Office 2021 정품, V3 정품 설치되어 있고, 바이오스 등 모든
-            프로그램 업데이트 후 보관 중입니다. 설치된 프로그램은 원하시면 추후
-            메일로 보내드립니다. 프로그램 가격만해도 상당한 가격이며, 바닥에
-            거슬리지 않는 약간의 눌림(?)있습니다. 크게 거슬리지는 않지만 혹시나
-            교체비용 생각해서 가격 정했습니다. 13세대 동일 기종보다 RAM이 커서
-            작업속도 더 빠르고 강력합니다. 직거래, 택배거래, 안전거래 모두
-            가능합니다.
-          </ContentSpan>
-          <PriceSpan>1,370,000원</PriceSpan>
-          <SubSpan>8분 전 · 조회 5 · 찜 0</SubSpan>
+          {/* item.categoryList 돌면서 뿌려주기*/}
+          <CategorySpan>
+            {item?.categoryList.map((category: any, index: number) => {
+              return (
+                <span key={index}>
+                  {category}
+                  {index < item?.categoryList.length - 1 ? "·" : null}
+                </span>
+              );
+            })}
+          </CategorySpan>
+          <TitleSpan>{item?.title}</TitleSpan>
+          <ContentSpan>{item?.content}</ContentSpan>
+          <PriceSpan>{item?.price}원</PriceSpan>
+          <SubSpan>
+            {item?.createdAt}분 전 · 조회 {item?.view} · 찜 {item?.likeCount}
+          </SubSpan>
           <SubSpan>
             신고하기
             <RedSvg
@@ -100,7 +172,7 @@ export default function ItemDetail() {
               />
             </RedSvg>
           </SubSpan>
-          <SelectBtn>채팅하기</SelectBtn>
+          <SelectBtn onClick={toChatRoom}>채팅하기</SelectBtn>
           <SelectBtn onClick={toggle}>일정 선택하기</SelectBtn>
         </UpperRightDiv>
       </UpperDiv>
@@ -123,39 +195,27 @@ export default function ItemDetail() {
         <LowerRightDiv>
           <SellerTitle>판매자 정보</SellerTitle>
           <SellerDiv>
-            <SellerImg src={female}></SellerImg>
+            {/* 등급 관련 이미지 넣기.. */}
+            <ImgDiv>
+              <SellerImg src={gradeFive}></SellerImg>
+            </ImgDiv>
             <SellerSpanDiv>
-              <SellerName>백조이김</SellerName>
-              <span>Lv.1 애호박씨앗</span>
+              <SellerName>{item?.seller.nickname}</SellerName>
+              <span>{item?.seller.grade}</span>
               <SubSpan>판매중 3 · 거래완료 2</SubSpan>
             </SellerSpanDiv>
-            <SelectDiv>
-              <StatusSelect>
-                <option>판매중</option>
-                <option>예약중</option>
-                <option>판매완료</option>
-              </StatusSelect>
-            </SelectDiv>
           </SellerDiv>
         </LowerRightDiv>
       </LowerDiv>
     </ContainerDiv>
   );
 }
-const ContainerDiv = styled.div`
+const ContainerDiv = styled(motion.div)`
   display: flex;
   flex-direction: column;
   padding: 5rem;
   margin: 0 10rem 13rem 10rem;
   font-family: "IBM Plex Sans KR", sans-serif;
-`;
-
-const StyledSvg = styled.svg`
-  height: 1.5rem;
-  width: 1.5rem;
-  cursor: pointer;
-  color: #849c80;
-  margin-bottom: 1rem;
 `;
 
 const RedSvg = styled.svg`
@@ -270,12 +330,20 @@ const SellerDiv = styled.div`
   padding-left: 1rem;
 `;
 
-const SellerImg = styled.img`
+const ImgDiv = styled.div`
   width: 6.5rem;
   height: 6.5rem;
   border-radius: 5rem;
   border: solid 1px black;
   margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const SellerImg = styled.img`
+  width: 4.3rem;
+  height: 4.3rem;
 `;
 
 const SellerSpanDiv = styled.div`
@@ -330,8 +398,8 @@ const StyledBtn = styled.button`
 `;
 
 const SvgButton = styled.button`
-  position: absolute;
-  right: 17rem;
+  float: right;
+  margin-right: 1rem;
   height: 3rem;
   width: 3rem;
   background-color: white;

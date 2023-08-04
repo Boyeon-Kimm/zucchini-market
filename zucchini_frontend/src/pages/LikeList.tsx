@@ -1,58 +1,81 @@
 import styled from "styled-components";
 import CategorySecond from "../components/List/CategorySecond";
 import Search from "../components/List/Search";
-import watch from "../assets/images/watch.png";
 import ItemEach from "../components/List/ItemEach";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import Loading from "../components/Loading/Loading";
+import { motion } from "framer-motion";
+interface Item {
+  id: number;
+}
 
 export default function LikeList() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState<Item[] | null>(null);
+
+  const [items, setItems] = useState([]);
+  const [keyword, setKeyword] = useState("");
+  function getItems() {
+    axios
+      .get(`http://localhost:8080/user/item/like?keyword=${keyword}`)
+      .then((response) => {
+        setItems(response.data);
+      });
+  }
+
+  useEffect(() => {
+    getItems();
+  }, []);
+
+  useEffect(() => {
+    setIsLoading(true);
+
+    axios
+      .get("http://localhost:8080/api/mypage/like")
+      .then((res) => {
+        setData(res.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (data) {
+      setIsLoading(false);
+    }
+    setIsLoading(false); // 없앨거에용
+  }, [data]);
+
+  if (isLoading) {
+    return <Loading />;
+  }
+
   return (
-    <ContainerDiv>
+    <ContainerDiv
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
       <div>
         <TitleSpan>나의 찜한 목록</TitleSpan>
         <CategorySecond />
-        <Search />
+        <Search setKeyword={setKeyword} getItems={getItems} />
       </div>
       <LowerDiv>
         <ItemsContainer>
-          <ItemEach />
-          <ItemDiv>
-            <ItemImg src={watch} />
-            <ItemTitle>
-              갤럭시 워치5 PRO 골드에디션 블랙 45MM 판매합니다(미개봉)
-            </ItemTitle>
-            <ItemContent>365,000원</ItemContent>
-            <ItemContent>춘식이</ItemContent>
-          </ItemDiv>
-          <ItemDiv>
-            <ItemImg src={watch} />
-            <ItemTitle>
-              갤럭시 워치5 PRO 골드에디션 블랙 45MM 판매합니다(미개봉)
-            </ItemTitle>
-            <ItemContent>365,000원</ItemContent>
-            <ItemContent>swan</ItemContent>
-          </ItemDiv>
-          <ItemDiv>
-            <ItemImg src={watch} />
-            <ItemTitle>
-              갤럭시 워치5 PRO 골드에디션 블랙 45MM 판매합니다(미개봉)
-            </ItemTitle>
-            <ItemContent>365,000원</ItemContent>
-            <ItemContent>seoulA209</ItemContent>
-          </ItemDiv>
-          <ItemDiv>
-            <ItemImg src={watch} />
-            <ItemTitle>
-              갤럭시 워치5 PRO 골드에디션 블랙 45MM 판매합니다(미개봉)
-            </ItemTitle>
-            <ItemContent>365,000원</ItemContent>
-            <ItemContent>김싸피</ItemContent>
-          </ItemDiv>
+          {data && data.length > 0 ? (
+            items.map((item, index) => <ItemEach item={item} />)
+          ) : (
+            <p>찜한 내역이 없습니다.</p>
+          )}
         </ItemsContainer>
       </LowerDiv>
     </ContainerDiv>
   );
 }
-const ContainerDiv = styled.div`
+const ContainerDiv = styled(motion.div)`
   display: flex;
   flex-direction: column;
   padding: 5rem;
@@ -75,30 +98,4 @@ const ItemsContainer = styled.div`
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
-`;
-
-const ItemDiv = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 16rem;
-  padding: 0.7rem 0.7rem 1.7rem 0.7rem;
-  margin-bottom: 1rem;
-  border: solid 1px #aeb9ad;
-  border-radius: 2rem;
-`;
-
-const ItemImg = styled.img`
-  border-radius: 1.5rem;
-`;
-
-const ItemTitle = styled.span`
-  font-weight: 500;
-  font-size: 1.1rem;
-  line-height: 1.4rem;
-  margin: 0.4rem 0.1rem;
-`;
-
-const ItemContent = styled.span`
-  color: gray;
-  margin: 0.2rem;
 `;
