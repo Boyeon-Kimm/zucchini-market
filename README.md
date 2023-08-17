@@ -2,9 +2,9 @@
 
 ## 👩‍💻👨‍💻 팀원 소개
 
-**팀원 : 김경희, 김보연, 백승일, 백아현, 이상호, 조은비**
+팀원 : 김경희, 김보연, 백승일, 백아현, 이상호, 조은비
 
-![Design (2).png](Zucchini%20Market%20a9996527b9f24b4690951643ffc0d8a9/Design_(2).png)
+![Design (2).png](./assets/team.png)
 
 <br>
 <br>
@@ -25,10 +25,11 @@
 
 ### 애호박마켓
 
-> **애** 타는 당신을 위한
-**호** 구없는
-**박** 박
-**마켓**
+> **애** 타는 당신을 위한<br/>
+**호** 구없는<br/>
+**박** 박<br/>
+**마**<br/>
+**켓**
 > 
 
 <br>
@@ -72,34 +73,34 @@
 
 ### front
 
-react, typescript, reactquery, react hook form, styled components
+ ![React](https://img.shields.io/badge/react-444444?style=for-the-badge&logo=react)  ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?&style=for-the-badge&logo=TypeScript&logoColor=white)  ![ReactQuery](https://img.shields.io/badge/ReactQuery-FF4154.svg?&style=for-the-badge&logo=ReactQuery&logoColor=white) ![ReactHookForm](https://img.shields.io/badge/ReactHookForm-EC5990.svg?&style=for-the-badge&logo=ReactHookForm&logoColor=white)    ![styledcomponents](https://img.shields.io/badge/styledcomponents-DB7093.svg?&style=for-the-badge&logo=styledcomponents&logoColor=white)
 
 ### back
 
-spring security, spring data jpa, jwt, querydsl
+![springboot](https://img.shields.io/badge/springboot-6DB33F.svg?&style=for-the-badge&logo=springboot&logoColor=white)  ![springsecurity](https://img.shields.io/badge/springsecurity-6DB33F.svg?&style=for-the-badge&logo=springsecurity&logoColor=white)  ![jsonwebtokens](https://img.shields.io/badge/jsonwebtokens-000000.svg?&style=for-the-badge&logo=jsonwebtokens&logoColor=white)  ![JPA](https://img.shields.io/badge/JPA-6DB33F.svg?&style=for-the-badge&logo=JPA&logoColor=white)  ![QueryDSl](https://img.shields.io/badge/QueryDSl-0099E5.svg?&style=for-the-badge&logo=QueryDSl&logoColor=white)
 
-db
+### DB
 
-mysql, amazons3, redis
+![mysql](https://img.shields.io/badge/mysql-4479A1.svg?&style=for-the-badge&logo=mysql&logoColor=white)  ![amazons3](https://img.shields.io/badge/amazons3-569A31.svg?&style=for-the-badge&logo=amazons3&logoColor=white)  ![redis](https://img.shields.io/badge/redis-DC382D.svg?&style=for-the-badge&logo=redis&logoColor=white)
 
 ### CI/CD
 
-nginx, docker, docker-compose, jenkins
+![nginx](https://img.shields.io/badge/nginx-009639.svg?&style=for-the-badge&logo=nginx&logoColor=white) ![docker](https://img.shields.io/badge/docker-2496ED.svg?&style=for-the-badge&logo=docker&logoColor=white) ![dockercompose](https://img.shields.io/badge/dockercompose-2496ED.svg?&style=for-the-badge&logo=dockercompose&logoColor=white) ![jenkins](https://img.shields.io/badge/jenkins-D24939.svg?&style=for-the-badge&logo=jenkins&logoColor=white)
 
 ### WebRTC
 
-openvidu
+![webrtc](https://img.shields.io/badge/webrtc-333333.svg?&style=for-the-badge&logo=webrtc&logoColor=white)
 
 ### 협업툴
 
-JIRA, GITLAB, MATTERMOST, SLACK, notion
+![jira](https://img.shields.io/badge/jira-0052CC.svg?&style=for-the-badge&logo=jira&logoColor=white)  ![gitlab](https://img.shields.io/badge/gitlab-FC6D26.svg?&style=for-the-badge&logo=gitlab&logoColor=white)  ![notion](https://img.shields.io/badge/notion-000000.svg?&style=for-the-badge&logo=notion&logoColor=white)  ![slack](https://img.shields.io/badge/slack-4A154B.svg?&style=for-the-badge&logo=slack&logoColor=white)  ![mattermost](https://img.shields.io/badge/mattermost-0058CC.svg?&style=for-the-badge&logo=mattermost&logoColor=white)
 
 <br>
 <br>
 
 ## 🗃️ ERD
 
-![Untitled](Zucchini%20Market%20a9996527b9f24b4690951643ffc0d8a9/Untitled.png)
+![Untitled](./assets/erd.png)
 
 <br>
 
@@ -107,7 +108,7 @@ JIRA, GITLAB, MATTERMOST, SLACK, notion
 
 ## 🎨 Figma
 
-![Untitled](Zucchini%20Market%20a9996527b9f24b4690951643ffc0d8a9/Untitled%201.png)
+![Untitled](./assets/figma.png)
 
 <br>
 
@@ -115,7 +116,7 @@ JIRA, GITLAB, MATTERMOST, SLACK, notion
 
 ## 🗳️ API 명세
 
-[api.pdf](Zucchini%20Market%20a9996527b9f24b4690951643ffc0d8a9/api.pdf)
+[api.pdf](./assets/api.pdf)
 
 <br>
 <br>
