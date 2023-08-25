@@ -3,12 +3,21 @@ package com.zucchini.domain.video.dto.response;
 import lombok.Builder;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
-import java.sql.Timestamp;
 import java.util.Date;
 
+/**
+ * 비디오 조회 response
+ */
 @Data
 public class FindVideoResponse {
+
+    int no;
+
+    int itemNo;
+
+    String itemTitle;
+
+    String seller;
 
     String link;
 
@@ -19,7 +28,11 @@ public class FindVideoResponse {
     Date deleteTime;
 
     @Builder
-    public FindVideoResponse(String link, Date startTime, Date endTime, Date deleteTime) {
+    public FindVideoResponse(int no, int itemNo, String itemTitle, String seller, String link, Date startTime, Date endTime, Date deleteTime) {
+        this.no = no;
+        this.itemNo = itemNo;
+        this.itemTitle = itemTitle;
+        this.seller = seller;
         this.link = link;
         this.startTime = startTime;
         this.endTime = endTime;

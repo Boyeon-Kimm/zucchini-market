@@ -1,11 +1,11 @@
 management:
   health:
     diskspace:
-      enabled: 'true'
+      enabled: "true"
     default:
-      enabled: 'true'
+      enabled: "true"
     db:
-      enabled: 'true'
+      enabled: "true"
   servlet:
     context-path: /manage
 spa:
@@ -14,7 +14,7 @@ spring:
   web:
     resources:
       static-locations: classpath:/dist/
-      add-mappings: 'false'
+      add-mappings: "false"
   jpa:
     hibernate:
       naming:
@@ -29,18 +29,18 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      password: ssafy
-      username: ssafy
-    url: jdbc:mysql://localhost:3306/zucchini?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul&zeroDateTimeBehavior=convertToNull&rewriteBatchedStatements=true
+      password: zucchini
+      username: zucchini
+    url: jdbc:mysql://i9a209.p.ssafy.io:3308/zucchini?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul&zeroDateTimeBehavior=convertToNull&rewriteBatchedStatements=true
   data:
     web:
       pageable:
-        one-indexed-parameters: 'true'
+        one-indexed-parameters: "true"
   mvc:
-    throw-exception-if-no-handler-found: 'true'
+    throw-exception-if-no-handler-found: "true"
   devtools:
     livereload:
-      enabled: 'true'
+      enabled: "true"
   mail:
     host: smtp.gmail.com
     port: 587
@@ -50,20 +50,18 @@ spring:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
   redis:
-    host: 127.0.0.1
+    host: i9a209.p.ssafy.io
     port: 6379
 logging:
   level:
     org:
       org.hibernate.SQL: DEBUG
       org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-      sringframework:
-        boot: DEBUG
-        security: DEBUG
+      org.springframework.boot: DEBUG
+      org.springframework.security: DEBUG
+      org.springframework.web: DEBUG
       apache:
         tiles: INFO
-      springframework:
-        web: DEBUG
     root: INFO
     com:
       samsung:
@@ -73,21 +71,25 @@ logging:
 server:
   servlet:
     encoding:
-      enabled: 'true'
-      force: 'true'
+      enabled: "true"
+      force: "true"
       charset: UTF-8
-    contextPath: /
-  address: localhost
-  port: '8080'
+    contextPath: /api
+  address: 0.0.0.0
+  port: "8200"
   compression:
-    enabled: 'true'
+    enabled: "true"
     mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
 build:
-  date: '@build.date@'
+  date: "@build.date@"
 jwt:
   expiration: '1296000000'
+  cookieName: zucchiniCookie
   secret: dyAeHubOOc8KaOfYB6XEQoEj1QzRlVgtjNL8PYs1A1tymZvvqkcEU7L1imkKHeDa
 springfox:
   documentation:
     swagger:
       use-model-v3: 'false'
+openvidu:
+  url: 'https://i9a209.p.ssafy.io:8443'
+  secret: 'pikapikapikachu'

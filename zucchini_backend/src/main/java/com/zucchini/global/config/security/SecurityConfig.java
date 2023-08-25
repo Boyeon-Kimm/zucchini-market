@@ -39,16 +39,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .cors()
-
                 .and()
                 .csrf().disable()
                 .authorizeRequests() // 5
-//                .antMatchers("/", "/user/**", "/login", "/health").permitAll()
+                .antMatchers("/api/ws/**").permitAll()
+                .antMatchers("/api/ws").permitAll()
+                .antMatchers("/ws/**").permitAll()
+                .antMatchers("/ws").permitAll()
                 .antMatchers(HttpMethod.POST, "/user", "/user/login", "/user/email", "/user/authCheck", "/user/reissue").permitAll()
-                .antMatchers(HttpMethod.GET, "/user/idCheck/**", "/item", "/item/**").permitAll()
-                .antMatchers(HttpMethod.DELETE, "/user", "/user/*/item/like/**")
-                .hasAuthority("USER")
-                .antMatchers(HttpMethod.DELETE, "/user/**")
+                .antMatchers(HttpMethod.GET, "/user/idCheck/**", "/item", "/item/**", "/video/check/**").permitAll()
+                .antMatchers(HttpMethod.DELETE, "/user", "/user/*/item/like/**").authenticated()
+                .antMatchers(HttpMethod.DELETE, "/user/*")
                 .hasAuthority("ADMIN")
                 .antMatchers(HttpMethod.GET, "/user")
                 .hasAuthority("ADMIN")
@@ -56,11 +57,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .exceptionHandling()
                 .authenticationEntryPoint(jwtEntryPoint)
-
                 .and()
                 .logout().disable() // 6
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-
                 .and() // 7
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         ;

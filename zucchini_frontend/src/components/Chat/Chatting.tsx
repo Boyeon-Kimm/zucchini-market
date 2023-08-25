@@ -4,12 +4,13 @@ import Imessage from "../../types/Imessage";
 
 interface Iprops {
   message: Imessage;
+  isUser: boolean;
 }
 
 export default function Chatting(props: Iprops) {
   return (
     <ChatBubble>
-      <MesssageEach message={props.message} />
+      <MesssageEach message={props.message} isUser={props.isUser} />
       {/* {[1, 2, 3, 4, 5].map((e, i) => (
         // props로 작성자 정보 보내주기
         <MesssageEach send={e} />
@@ -23,6 +24,7 @@ export default function Chatting(props: Iprops) {
 }
 
 const ChatBubble = styled.div`
+  word-wrap: break-word;
   display: flex;
   flex-direction: column;
   /* padding: 1rem; */

@@ -5,22 +5,115 @@ import Modal from "../components/Common/Modal";
 import { useEffect, useRef, useState } from "react";
 import Chatting from "../components/Chat/Chatting";
 import ClosedButton from "../components/Button/ClosedButton";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router";
 import { useForm } from "react-hook-form";
-import axios from "axios";
 import { Client } from "@stomp/stompjs";
 import Imessage from "../types/Imessage";
 import { motion } from "framer-motion";
+import { getUser } from "../hooks/useLocalStorage";
+import api from "../utils/api";
+import Report from "../components/Common/Report";
+import GradeImage from "../components/Common/GradeImage";
+import GradeText from "../components/Common/GradeText";
+import NoImage from "../assets/images/NoImage.png";
+import { HttpResponse } from "aws-sdk";
+import { ServerResponse } from "http";
+
+interface ISeller {
+  nickname: string;
+  grade: number;
+}
+
+interface IDate {
+  date: Date;
+  status: number;
+}
+
+interface IItem {
+  no: number;
+  title: string;
+  price: number;
+  image: string;
+  seller: ISeller;
+  dateList: IDate[];
+}
+interface OpponentInfo {
+  opponentNickname: string;
+  opponentGrade: number;
+}
 
 export default function ChatRoom() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isReporting, setIsReporting] = useState(false); // 신고모달
+  const [alertOpen, setAlertOpen] = useState(false); // 거래불가메세지
+  const [alertMessage, setAlertMessage] = useState("");
+
+  const [opponent, setOpponent] = useState<OpponentInfo>();
+
+  const toggleReport = () => {
+    setIsReporting(!isReporting);
+  };
+  const reportReasons = [
+    "거래 / 환불 분쟁 신고",
+    "사기 ",
+    "전문판매업자",
+    "욕설, 비방",
+    "성희롱",
+  ];
+
+  const [user, setUser] = useState({
+    no: 0,
+    nickname: "",
+  });
+  const [item, setItem] = useState<IItem>();
+  useEffect(() => {
+    console.log("user.nickname : " + user.nickname);
+    console.log("item.seller.nickname : " + item?.seller.nickname);
+  }, [user, item]);
 
   const { register, handleSubmit, reset } = useForm();
 
   const [messages, setMessages] = useState<Imessage[]>([]);
+  const { no } = useParams();
+  const chatMainDivRef = useRef<HTMLDivElement>(null);
+
+  // messages 배열이 변경될 때마다 스크롤을 맨 아래로 이동
+  useEffect(() => {
+    if (chatMainDivRef.current) {
+      chatMainDivRef.current.scrollTop = chatMainDivRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const location = useLocation();
+  // 아이템 가져오기
+  useEffect(() => {
+    const getItem = async () => {
+      try {
+        const response = await api.get(
+          `room/item/${location.pathname.split("/chat/")[1]}`
+        );
+        setItem(response.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    getItem();
+  }, []);
+
+  // 상대방 정보 불러오기 룸넘버 넘겨줘야함
+  useEffect(() => {
+    const getOpponent = async () => {
+      await api
+        .get(`room/user/${no}`)
+        .then((response) => setOpponent(response.data));
+    };
+    getOpponent();
+  }, []);
 
   const onSubmit = async (data: any) => {
     if (!client.current) return;
+    if (data.content === "") return;
 
     client.current.publish({
       destination: "/pub/chat",
@@ -28,7 +121,8 @@ export default function ChatRoom() {
       //   Authorization: `Bearer ${localStorage.getItem("token")}`,
       // },
       body: JSON.stringify({
-        roomNo: 1,
+        roomNo: no,
+        senderNo: user.no,
         content: data.content,
       }),
     });
@@ -46,28 +140,15 @@ export default function ChatRoom() {
     reset();
   };
 
+  async function getUserInformation() {
+    const response = await api.get("/user/findMyNo");
+    setUser(response.data);
+  }
+
   async function getMessageList() {
-    // 임시 주석
-    // const response = await axios.get("http://localhost:8080/room/3/message");
-    // setMessages(response.data);
-
-    // 밑에 테스트 데이터로 일단 대체함
-    const testData: Imessage[] = [
-      {
-        sender: "hello",
-        content: "world",
-        isRead: false,
-        createdAt: "2021-08-26T15:00:00.000+00:00",
-      },
-      {
-        sender: "olleh",
-        content: "world",
-        isRead: false,
-        createdAt: "2021-08-26T15:00:00.000+00:00",
-      },
-    ];
-
-    setMessages(testData);
+    const response = await api.get(`/room/${no}/message`);
+    setMessages(response.data);
+    messages.map((message) => console.log(message.read));
   }
 
   const { apply_id } = useParams();
@@ -76,20 +157,34 @@ export default function ChatRoom() {
   const subscribe = () => {
     if (!client.current) return;
     // client.current.subscribe("/sub/chat/" + apply_id, (body) => { 현재 방번호까지 구현 되면 진행하기 (로그인이 되야 됨)
-    client.current.subscribe("/sub/chat/" + 1, (body) => {
+    client.current.subscribe("/sub/chat/" + no, (body) => {
       const json_body = JSON.parse(body.body);
-      console.log(json_body);
+      // console.log(json_body);
       setMessages((prevMessages) => [...prevMessages, json_body]);
+    });
+
+    // 읽음 상태 변경 구독
+    client.current.subscribe("/sub/chat/readStatus/" + no, () => {
+      setMessages((prevMessages) =>
+        prevMessages.map((message) => ({
+          ...message,
+          read: true, // 상태를 읽음으로 변경
+        }))
+      );
     });
   };
 
   const connect = () => {
-    console.log("연결성공기원");
+    if (!no) return;
+    console.log("연결이 성공적으로 수행되었습니다.");
     client.current = new Client({
-      brokerURL: "ws://localhost:8080/api/ws",
+      brokerURL: "ws://i9a209.p.ssafy.io/api/ws",
       onConnect: () => {
-        console.log("success");
         subscribe();
+      },
+      connectHeaders: {
+        Authorization: `Bearer ${getUser()}`,
+        headerNo: no, // 방 번호 추가
       },
     });
     client.current.activate();
@@ -101,6 +196,8 @@ export default function ChatRoom() {
   };
 
   useEffect(() => {
+    console.log(getUser());
+    getUserInformation();
     connect();
 
     return () => disconnect();
@@ -116,8 +213,34 @@ export default function ChatRoom() {
 
   const [buyOpen, setBuyOpen] = useState(false);
 
-  const buyToggle = () => {
+  const sellToggle = () => {
     setBuyOpen(!buyOpen);
+  };
+
+  const alertToggle = () => {
+    setAlertOpen(!alertOpen);
+  };
+
+  const navigate = useNavigate();
+  const moveItem = () => {
+    navigate(`/item/${item?.no}`);
+  };
+
+  // 예약중으로 상태변경
+  const nextStatus = async () => {
+    try {
+      await api
+        .put(`item/${item?.no}/deal?buyer=${opponent?.opponentNickname}`)
+        .then((response) => console.log(response));
+    } catch (error: any) {
+      setAlertMessage(`${error.response.data}`);
+      alertToggle();
+      sellToggle();
+    }
+  };
+
+  const toUserPage = () => {
+    navigate(`/userpage/${item?.seller.nickname}`);
   };
 
   return (
@@ -126,148 +249,126 @@ export default function ChatRoom() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <Modal isOpen={buyOpen} toggle={buyToggle}>
+      <Modal isOpen={alertOpen} toggle={alertToggle}>
         <ModalDiv>
-          <ClosedButton />
+          <ClosedButton onClick={alertToggle} />
         </ModalDiv>
-        <ModalSpan>구매 확정하기</ModalSpan>
+        <ModalSpan>거래 불가</ModalSpan>
         <SpanDiv>
-          <span>구매하신 물건에 이상이 없는지 확인하셨나요?</span>
-          <span>구매 확정을 누르시면 영상 다시보기가 불가합니다.</span>
-          <span>중고 매물을 꼼꼼하게 확인 후 확정을 눌러주세요.</span>
+          <span>{alertMessage}</span>
         </SpanDiv>
         <ButtonDiv>
-          <GreenBtn>
-            <Link to={"/mypage/buy"}>확정</Link>
+          <GreenBtn onClick={alertToggle}>확인</GreenBtn>
+        </ButtonDiv>
+      </Modal>
+      <Modal isOpen={buyOpen} toggle={sellToggle}>
+        <ModalDiv>
+          <ClosedButton onClick={sellToggle} />
+        </ModalDiv>
+        <ModalSpan>거래 예약하기</ModalSpan>
+        <SpanDiv>
+          <span>지금 채팅 중인 분과 거래 하시겠습니까?</span>
+          <span>
+            확인 버튼을 누르시면 해당 상품이 '예약중' 상태로 변경됩니다.
+          </span>
+        </SpanDiv>
+        <ButtonDiv>
+          <GreenBtn onClick={nextStatus}>
+            <Link to={"/mypage/sell"}>확정</Link>
           </GreenBtn>
         </ButtonDiv>
       </Modal>
-      <Modal isOpen={isOpen} toggle={toggle}>
+
+      <Modal isOpen={isReporting} toggle={toggleReport}>
         <ModalDiv>
-          <StyledSvg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            className="w-6 h-6"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </StyledSvg>
+          <ClosedButton onClick={toggleReport} />
         </ModalDiv>
-        <ModalSpan>화상통화 일정 선택</ModalSpan>
-        <ModalSubSpan>
-          <SubSpan>일정은 하루만 선택 가능합니다</SubSpan>
-        </ModalSubSpan>
-        <SimpleCalendar />
-        <ModalBtn>확인</ModalBtn>
-        <ModalBtn>취소</ModalBtn>
+        <ModalSpan>신고하기</ModalSpan>
+        <SubSpan>신고 사유를 선택해주세요.</SubSpan>
+        <Report
+          reportedNickname={opponent?.opponentNickname}
+          itemNo={item?.no}
+          reasons={reportReasons}
+          roomNo={location.pathname.split("/")[2]}
+          onCancel={toggleReport}
+        />
       </Modal>
       <BodyDiv>
         <LeftDiv>
           <UpperDiv>
             <TitleSpan>판매자가 선택한 일정</TitleSpan>
-            <SimpleCalendar />
-            <StyledBtnDiv>
-              <StyledBtn>
-                <Link to={"/conference"} target={"_blank"}>
-                  영상 통화하기
-                </Link>
-              </StyledBtn>
-              <StyledBtn onClick={toggle}>일정 선택하기</StyledBtn>
-            </StyledBtnDiv>
+            {item && user && (
+              <SimpleCalendar
+                itemNo={item?.no}
+                mark={item?.dateList}
+                myNickname={user.nickname}
+                sellerNickname={item.seller.nickname}
+              />
+            )}
           </UpperDiv>
           <LowerDiv>
-            <SellerTitle>판매자 정보</SellerTitle>
+            <SellerTitle>상대방 정보</SellerTitle>
             <SellerDiv>
-              <SellerImg src={female}></SellerImg>
+              <SellerImgDiv>
+                <GradeImage
+                  grade={opponent?.opponentGrade || 1}
+                  height={70}
+                  width={70}
+                />
+              </SellerImgDiv>
               <SellerSpanDiv>
-                <SellerName>백조이김</SellerName>
-                <span>Lv.1 애호박씨앗</span>
-                <SubSpan>판매중 3 · 거래완료 2</SubSpan>
+                <SellerName onClick={toUserPage}>
+                  {opponent?.opponentNickname}
+                </SellerName>
+                <GradeDiv>
+                  Lv.{opponent?.opponentGrade}
+                  <GradeText grade={opponent?.opponentGrade || 1} />
+                </GradeDiv>
               </SellerSpanDiv>
-              <SellerBtn onClick={buyToggle}>구매확정</SellerBtn>
+              <BtnDiv>
+                <ReportBtn onClick={toggleReport}>신고하기</ReportBtn>
+                {opponent?.opponentNickname !== item?.seller.nickname && (
+                  <SellerBtn onClick={sellToggle}>거래 예약</SellerBtn>
+                )}
+              </BtnDiv>
             </SellerDiv>
           </LowerDiv>
         </LeftDiv>
         <RightDiv>
           <ChatTitleDiv>
-            <ChatImg src={female}></ChatImg>
-            <ChatDiv>
-              <SellerName>갤럭시북2 프로 360 32GB, 1TB 최고 사양</SellerName>
-              <SubSpan>백조이김</SubSpan>
+            <ChatImg src={item?.image ? item?.image : NoImage}></ChatImg>
+            <ChatDiv onClick={moveItem}>
+              <SellerName>{item?.title}</SellerName>
+              <SubSpan>{item?.price.toLocaleString("ko-KR")}원</SubSpan>
             </ChatDiv>
-            <SvgDiv>
-              <Svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  stroke-linecap="round"
-                  d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"
-                />
-              </Svg>
-              <Svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M6.7y5 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z"
-                />
-              </Svg>
-            </SvgDiv>
           </ChatTitleDiv>
-          <ChatMainDiv>
+          <ChatMainDiv ref={chatMainDivRef}>
             {messages.map((message, index) => (
-              <Chatting message={message} />
+              <Chatting
+                message={message}
+                isUser={message.senderNo === user.no}
+              />
             ))}
           </ChatMainDiv>
           <ChatInputDiv>
-            <Svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"
-              />
-            </Svg>
             <StyledForm onSubmit={handleSubmit(onSubmit)}>
               <StyledInput
                 {...register("content")}
                 placeholder="메시지를 입력해주세요.."
               ></StyledInput>
               <SubmitBtn type="submit">
+                {/* 제출 안되면 이부분 엎어야 함 */}
                 <Svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
-                  stroke-width="1.5"
+                  strokeWidth="1.5"
                   stroke="currentColor"
                   className="w-6 h-6"
                 >
                   <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
                   />
                 </Svg>
@@ -288,13 +389,6 @@ const ContainerDiv = styled(motion.div)`
   font-family: "IBM Plex Sans KR", sans-serif;
 `;
 
-const StyledSvg = styled.svg`
-  height: 1.5rem;
-  width: 1.5rem;
-  cursor: pointer;
-  color: #849c80;
-`;
-
 const BodyDiv = styled.div`
   display: flex;
   flex-direction: row;
@@ -303,6 +397,12 @@ const BodyDiv = styled.div`
 `;
 
 const LeftDiv = styled.div``;
+
+const BtnDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding-top: 1rem;
+`;
 
 const RightDiv = styled.div`
   width: 40rem;
@@ -347,20 +447,6 @@ const StyledBtn = styled.button`
   }
 `;
 
-const ModalBtn = styled.button`
-  width: 9rem;
-  height: 2.5rem;
-  background-color: #cde990;
-  border: solid 1px #cde990;
-  border-radius: 0.4rem;
-  cursor: pointer;
-  margin-right: 0.4rem;
-  margin-top: 2rem;
-
-  &:hover {
-    background-color: white;
-  }
-`;
 const SellerDiv = styled.div`
   display: flex;
   align-items: center;
@@ -368,12 +454,14 @@ const SellerDiv = styled.div`
   width: 100%;
 `;
 
-const SellerImg = styled.img`
-  width: 6.5rem;
-  height: 6.5rem;
-  border-radius: 5rem;
-  border: solid 1px black;
+const SellerImgDiv = styled.div`
+  width: 7rem;
+  height: 7rem;
+  border-radius: 50%;
+  border: solid 3px #cde990;
   margin-top: 1rem;
+  display: flex;
+  justify-content: center;
 `;
 
 const SellerSpanDiv = styled.div`
@@ -392,6 +480,9 @@ const SellerTitle = styled.span`
 
 const SellerName = styled.span`
   font-weight: 700;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 `;
 
 const SubSpan = styled.span`
@@ -418,8 +509,8 @@ const ModalSpan = styled.div`
 const ChatTitleDiv = styled.div`
   height: 4rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 1rem;
   padding: 0 1rem;
   background-color: #f3f3f3;
 `;
@@ -462,12 +553,6 @@ const ChatInputDiv = styled.div`
   background-color: #f3f3f3;
 `;
 
-const SvgDiv = styled.div`
-  display: flex;
-  justify-content: space-between;
-  width: 3.5rem;
-`;
-
 const Svg = styled.svg`
   width: 24px;
   height: 24px;
@@ -477,15 +562,17 @@ const Svg = styled.svg`
 const ChatImg = styled.img`
   height: 3rem;
   width: 3rem;
-  border: solid 1px black;
+  border: solid 1px #254021;
   border-radius: 4rem;
 `;
 
 const ChatDiv = styled.div`
   display: flex;
   flex-direction: column;
+  max-width: 29rem;
   padding-top: 0.5rem;
-  gap: 0.2rem;
+  gap: 0.4rem;
+  cursor: pointer;
 `;
 
 const StyledInput = styled.input`
@@ -505,16 +592,32 @@ const StyledInput = styled.input`
 `;
 
 const SellerBtn = styled.button`
-  height: 3rem;
+  height: 2rem;
   width: 5.6rem;
-  border-radius: 0.4rem;
-  border: solid 2px #ffd4d4;
-  background-color: #ffd4d4;
+  border-radius: 0.3rem;
+  border: solid 2px #88a44c;
+  background-color: #cde990;
   letter-spacing: 0.1rem;
+  margin: 0.2rem;
   cursor: pointer;
 
   &:hover {
     background-color: white;
+  }
+`;
+
+const ReportBtn = styled.button`
+  height: 2rem;
+  width: 5.6rem;
+  border-radius: 0.3rem;
+  border: solid 2px tomato;
+  background-color: white;
+  letter-spacing: 0.1rem;
+  margin: 0.2rem;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #ffd4d4;
   }
 `;
 
@@ -562,4 +665,9 @@ const StyledForm = styled.form`
   justify-content: center;
   align-items: center;
   margin-left: 0.5rem;
+`;
+
+const GradeDiv = styled.div`
+  display: flex;
+  gap: 0.3rem;
 `;

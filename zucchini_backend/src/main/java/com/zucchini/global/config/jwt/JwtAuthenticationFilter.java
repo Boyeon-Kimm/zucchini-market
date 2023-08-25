@@ -31,7 +31,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String accessToken = getToken(request);
-        if (accessToken != null) {
+        log.info("accessToken==========================={}", accessToken);
+        if (accessToken != null && !accessToken.equals("undefined")) {
             checkLogout(accessToken);
             String id = jwtTokenUtil.getUsername(accessToken);
             if (id != null) {

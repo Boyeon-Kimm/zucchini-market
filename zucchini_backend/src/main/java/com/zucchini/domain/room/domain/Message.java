@@ -20,7 +20,7 @@ public class Message {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int no;
+    private Integer no;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_no", nullable = false)
@@ -41,12 +41,18 @@ public class Message {
     private boolean isRead;
 
     @Builder
-    public Message(Room room, User sender, String content) {
+    public Message(Room room, User sender, String content, boolean isRead) {
         this.room = room;
         this.sender = sender;
         this.content = content;
+        this.isRead = isRead;
     }
 
+    /**
+     * 비즈니스 메소드
+     */
+
+    // 현재 메세지를 읽었음을 표시함.
     public void read() {
         this.isRead = true;
     }

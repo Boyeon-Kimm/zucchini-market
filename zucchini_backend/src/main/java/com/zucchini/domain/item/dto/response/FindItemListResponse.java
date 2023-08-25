@@ -6,6 +6,9 @@ import lombok.Data;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * 상품 전체 조회 response
+ */
 @Data
 @Builder
 public class FindItemListResponse {
@@ -16,7 +19,7 @@ public class FindItemListResponse {
 
     private String content;
 
-    private Date updatedAt;
+    private Date createdAt;
 
     private int price;
 

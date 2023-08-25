@@ -12,10 +12,53 @@ import axios from "axios";
 import IFileTypes from "../types/IFileTypes";
 import { Button } from "../components/Common/Button";
 import useAuth from "../hooks/useAuth";
-import { NumericFormat } from "react-number-format";
 import { motion } from "framer-motion";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { Credentials } from "aws-sdk";
+import { v1, v3, v4, v5 } from "uuid";
+import api from "../utils/api";
+import { useNavigate } from "react-router";
+import { BASE_URL } from "../constants/url";
 
 export default function CreateItem() {
+  // sdk-s3
+  /*
+   * 실제 AWS 액세스 키와 시크릿 키로 대체해야 합니다.
+   * 이렇게 설정하면 AWS 서비스에 액세스하기 위한 인증 정보가 제공되어
+   * "Credential is missing" 에러가 해결될 것입니다.
+   * 액세스 키와 시크릿 키를 코드에 하드코딩하는 것은 보안상 좋지 않을 수 있으므로,
+   * 실제 프로덕션 환경에서는 환경 변수나 다른 보안 메커니즘을 사용하여 안전하게 관리하는 것이 좋습니다.
+   */
+  const [uploadURL, setUploadURL] = useState("");
+  //@ts-ignore
+  const credentials: Credentials = {
+    accessKeyId: "AKIA2ZDVZIZHOHIYLSNH",
+    secretAccessKey: "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",
+  };
+  const client = new S3Client({
+    region: "ap-northeast-2",
+    credentials: credentials,
+  });
+  const uploadFile = async (file: IFileTypes) => {
+    const uuid = v1().toString().replace("-", "");
+    const keyName = `${uuid}.${file.object.name}`;
+
+    const command = new PutObjectCommand({
+      Bucket: "zucchinifile",
+      Key: keyName,
+      Body: file.object,
+    });
+    try {
+      await client.send(command);
+
+      // 이미지의 공개 URL 생성
+      const imageURL = `https://zucchinifile.s3.ap-northeast-2.amazonaws.com/${keyName}`;
+      return imageURL;
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const token = useAuth();
 
   const {
@@ -30,22 +73,37 @@ export default function CreateItem() {
 
   const [files, setFiles] = useState<IFileTypes[]>([]);
   // 마우스로 선택한 날짜 받는 state
-  const [clickedTime, setClickedTime] = useState(new Date());
+  const getNextNearest30Minutes = (time: Date) => {
+    const minutes = time.getMinutes();
+
+    // Calculate the difference between the current minutes and the next 30-minute mark
+    const minutesUntilNext30 = 30 - (minutes % 30);
+
+    // Add the difference to the current time to get the next nearest 30-minute time
+    time.setMinutes(minutes + minutesUntilNext30);
+    time.setSeconds(0);
+
+    return time;
+  };
+  const [clickedTime, setClickedTime] = useState(
+    getNextNearest30Minutes(new Date())
+  );
 
   // 판매자가 선택한 시간들 차곡차곡 담아주기
   const [selectedTimes, setSelectedTimes] = useState<any>([]);
-
   // 카테고리 전부
-  const [allCategories, setAllCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState<any>([]);
   // 선택한 카테고리
   const [selectedCategories, setSelectedCategories] = useState<any>([]);
+
   // 처음 렌더링될 때, 카테고리 가져올 거예영
   useEffect(() => {
     const getCategories = async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/api/category`);
-        console.log(response);
-        setAllCategories(response.data.category);
+        const response = await axios.get(BASE_URL + "item/category");
+        // const response = await api.get("item/category");
+        const categoryNames = response.data.map((item: any) => item.category);
+        setAllCategories(categoryNames);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -58,15 +116,26 @@ export default function CreateItem() {
     console.log("눌려?");
   };
 
-  const onChange = (event: any) => {
-    if (!selectedCategories.includes(event.target.value)) {
-      setSelectedCategories([...selectedCategories, event.target.value]);
+  // 카테고리 추가
+  const onChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedCategory =
+      event.target.options[event.target.selectedIndex].textContent;
+    console.log(selectedCategory);
+    if (!selectedCategories.includes(selectedCategory)) {
+      setSelectedCategories([...selectedCategories, selectedCategory]);
     }
   };
 
-  const discardCategory = (e: any) => {
-    let reselect;
-    [e.target.value, ...reselect] = selectedCategories;
+  useEffect(() => {
+    console.log(selectedCategories);
+  }, [selectedCategories]);
+
+  // 카테고리 삭제
+  const discardCategory = (event: React.MouseEvent<HTMLButtonElement>) => {
+    console.log(event.currentTarget.value);
+    let reselect = selectedCategories.filter(
+      (e: any) => e !== event.currentTarget.value
+    );
     setSelectedCategories(reselect);
   };
 
@@ -80,29 +149,55 @@ export default function CreateItem() {
     // 30분 반올림하는 것도 추가해야대여....
     // gmt??tlqkf...
     setSelectedTimes([...selectedTimes, clickedTime]);
-    alert("추가되었습니다");
   };
 
+  // 선택한 시간 삭제
+  const removeTime = (timeToRemove: Date) => {
+    const updatedTimes = selectedTimes.filter(
+      (time: Date) => time !== timeToRemove
+    ); // 배열의 각 요소인 time(Date 객체)가 timeToRemove와 같지 않은지 검사
+    // 같지 않다면 true, 같으면 false 반환
+    // timeToRemove와 같지 않은 요소들만 남긴 새로운 배열 생성
+    setSelectedTimes(updatedTimes); // 새로운 배열 업데이트
+  };
+
+  const navigate = useNavigate();
   //진짜 제출
-  const onSubmit = (data: any) => {
-    alert(JSON.stringify(data));
+  const onSubmit = async (data: any) => {
+    console.log("등록등록");
     const formData = new FormData();
     formData.append("title", data.title);
     formData.append("content", data.content);
     formData.append("price", data.price);
-    formData.append("categoryList", data.category);
+    // 카테고리
     for (let i = 0; i < selectedCategories.length; i++) {
-      formData.append("categoryList", selectedCategories[i]);
+      const num = allCategories.indexOf(selectedCategories[i]) + 1;
+      formData.append("categoryList", `${num}`);
     }
+    // 이미지 파일 url
+    // await uploadFile(files[i]);
+    // formData.append("imageList", uploadURL);
+    const uploadedURLs = await Promise.all(files.map(uploadFile));
+
+    // 업로드된 URL들을 formData에 추가
+    uploadedURLs.forEach((url: any) => {
+      formData.append("imageList", url);
+    });
+
+    // 일정들
     for (let i = 0; i < selectedTimes.length; i++) {
       formData.append("dateList", selectedTimes[i]);
     }
-  };
 
-  //   const formData = new FormData();
-  //   //스케줄에만
-  //   formData.append();
-  // };
+    const response = await api.post("/item", formData);
+    const item_no = response.data;
+
+    navigate(`/item/${item_no}`);
+  };
+  useEffect(() => {
+    console.log(uploadURL);
+  }, [uploadURL]);
+
   return (
     <ContainerAll
       initial={{ opacity: 0 }}
@@ -121,13 +216,35 @@ export default function CreateItem() {
             toggle={toggle}
           />
         </CalendarDiv>
-        {/* 선택된 시간 보여주기 */}
-        {/* css 부탁해요~~ */}
-        <div>
+        <TimeContainerDiv>
           {selectedTimes.map((selectedTime: Date) => {
-            return <div>{selectedTime.toString()}</div>;
+            const formattedTime = dayjs(selectedTime).format(
+              "YYYY년 MM월 DD일 HH시 mm분"
+            );
+            return (
+              <TimeDiv key={formattedTime}>
+                {formattedTime}
+                {/* <TimeBtn> */}
+                <TimeSvg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="red"
+                  className="w-6 h-6"
+                  onClick={() => removeTime(selectedTime)}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </TimeSvg>
+                {/* </TimeBtn> */}
+              </TimeDiv>
+            );
           })}
-        </div>
+        </TimeContainerDiv>
         <StyledBtn onClick={addTime}>추가</StyledBtn>
         <StyledBtn onClick={() => toggle()}>완료</StyledBtn>
       </Modal>
@@ -139,9 +256,9 @@ export default function CreateItem() {
           <ContentInput
             {...register("title", {
               required: "제목을 입력해주세요.",
-              maxLength: 200,
+              maxLength: 80,
             })}
-            maxLength={200}
+            maxLength={80}
           ></ContentInput>
           <StyledMessage>
             <ErrorMessage errors={errors} name="title" />
@@ -150,7 +267,10 @@ export default function CreateItem() {
         <ContentDiv>
           <ContentSpan>상세 설명</ContentSpan>
           <ContentTextArea
-            {...register("content", { required: "설명을 입력해주세요." })}
+            maxLength={1000}
+            {...register("content", {
+              required: "설명을 입력해주세요.",
+            })}
           ></ContentTextArea>
           <StyledMessage>
             <ErrorMessage errors={errors} name="content" />
@@ -158,25 +278,39 @@ export default function CreateItem() {
         </ContentDiv>
         <ContentDiv>
           <ContentSpan>가격</ContentSpan>
-          <NumericFormat
+          {/* <NumericFormat
             type="text"
             placeholder=", 없이 입력해주세요"
             suffix={" 원"}
+            style={{
+              fontSize: "1rem",
+              paddingLeft: "0.5rem",
+            }}
             thousandSeparator=","
-            {...register("price", { required: "가격을 입력해주세요" })}
-          />
+            // {...register("price", { required: "가격을 입력해주세요" })}
+          /> */}
+          <ContentInput
+            type="number"
+            {...register("price", {
+              required: "가격을 입력해주세요",
+              pattern: {
+                value: /^[1-9]\d*$/,
+                message: "잘못된 값입니다.",
+              },
+            })}
+          ></ContentInput>
           <StyledMessage>
             <ErrorMessage errors={errors} name="price" />
           </StyledMessage>
         </ContentDiv>
         <ContentDiv>
           <ContentSpan>카테고리</ContentSpan>
-          {/* 카테고리 여러 개 선택은 나중에 생각할게요~^^ */}
           <div>
             {selectedCategories.map((category: any) => {
               return (
                 <Button
-                  Size="extraSmall"
+                  type="button"
+                  kind="extraSmall"
                   Variant="filled"
                   style={{
                     padding: "8px",
@@ -185,20 +319,24 @@ export default function CreateItem() {
                     borderRadius: "10px",
                   }}
                   onClick={discardCategory}
+                  value={category}
                 >
                   {category}
                 </Button>
               );
             })}
           </div>
-          <CategorySelect onChange={onChange}>
-            <option value="" disabled selected hidden>
+          <CategorySelect
+            {...register("category", {
+              required: "물품의 종류을 입력해주세요",
+              onChange: onChange,
+            })}
+          >
+            <option value="" disabled selected>
               물품의 종류를 선택해주세요
             </option>
-            <option value="" disabled selected hidden>
-              카테고리
-            </option>
-            {allCategories.map((category) => {
+
+            {allCategories?.map((category: any) => {
               return <option>{category}</option>;
             })}
           </CategorySelect>
@@ -210,8 +348,11 @@ export default function CreateItem() {
           <ContentSpan>사진 업로드</ContentSpan>
           <DragDrop files={files} setFiles={setFiles} />
         </ContentDiv>
+
         <ButtonDiv>
-          <StyledButton onClick={toggle}>일정 선택</StyledButton>
+          <StyledButton type="button" onClick={toggle}>
+            일정 선택
+          </StyledButton>
           <StyledButton>등록</StyledButton>
         </ButtonDiv>
       </ContainerForm>
@@ -289,8 +430,10 @@ const ContentTextArea = styled.textarea`
   border-radius: 0.4rem;
   border: transparent;
   font-size: 1rem;
-  padding: 0.7rem;
+  padding-left: 0.7rem;
   background-color: #f4f4f4;
+  resize: none;
+  overflow-y: auto;
 
   &:focus {
     box-shadow: 0 0 10px #9ec4f2;
@@ -320,6 +463,7 @@ const StyledButton = styled.button`
   background-color: #cde990;
   border: #cde990;
   color: #254021;
+  font-size: 1rem;
 
   &:hover {
     border: 2px solid #cde990;
@@ -353,8 +497,34 @@ const StyledBtn = styled.button`
   border-radius: 0.4rem;
   cursor: pointer;
   margin-right: 0.4rem;
+  margin-top: 1rem;
+  font-size: 1rem;
 
   &:hover {
     background-color: white;
   }
+`;
+
+const TimeContainerDiv = styled.div`
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 35rem;
+`;
+
+const TimeDiv = styled.div`
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  border: solid 1px black;
+  padding: 1rem;
+  width: 15rem;
+`;
+
+const TimeSvg = styled.svg`
+  height: 1.3rem;
+  width: 1.3rem;
+  cursor: pointer;
 `;

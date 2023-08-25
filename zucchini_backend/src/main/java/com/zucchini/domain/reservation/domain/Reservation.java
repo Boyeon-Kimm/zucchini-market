@@ -19,15 +19,11 @@ public class Reservation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int no;
+    private Integer no;
 
     @ManyToOne
     @JoinColumn(name = "user_no", nullable = false)
     private User user;
-
-//    @ManyToOne
-//    @JoinColumn(name = "conference_no", nullable = false)
-//    private Conference conference;
 
     @ManyToOne(targetEntity = Conference.class, fetch = FetchType.LAZY)
     @JoinColumn(name = "conference_no", insertable = false, updatable = false)
@@ -47,6 +43,20 @@ public class Reservation {
         this.user = user;
         this.conferenceNo = conferenceNo;
         this.isSeller = isSeller;
+        this.isAttended = false;
+    }
+
+    /**
+     * 비즈니스 메서드
+     */
+
+    // 회원의 활성화된 세션 참석 시 true
+    public void attend(){
+        this.isAttended = true;
+    }
+
+    // 회원의 활성화된 세션 나가기 시 false
+    public void leave(){
         this.isAttended = false;
     }
 

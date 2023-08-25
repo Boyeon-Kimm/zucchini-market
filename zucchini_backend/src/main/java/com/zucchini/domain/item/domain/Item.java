@@ -3,7 +3,7 @@ package com.zucchini.domain.item.domain;
 import com.zucchini.domain.category.domain.ItemCategory;
 import com.zucchini.domain.grade.domain.Grade;
 import com.zucchini.domain.image.domain.Image;
-import com.zucchini.domain.item.dto.request.ItemRequest;
+import com.zucchini.domain.item.dto.request.ModifyItemRequest;
 import com.zucchini.domain.user.domain.User;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -25,7 +25,7 @@ public class Item {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int no;
+    private Integer no;
 
     @Column(name = "title", length = 200, nullable = false)
     private String title;
@@ -35,7 +35,7 @@ public class Item {
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at", nullable = false, updatable = false)
     @UpdateTimestamp
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
@@ -54,7 +54,7 @@ public class Item {
     private User seller;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "buyer", nullable = false)
+    @JoinColumn(name = "buyer")
     private User buyer;
 
     @OneToMany(mappedBy = "item")
@@ -70,8 +70,7 @@ public class Item {
     private List<Image> imageList = new ArrayList<>();
 
     private int view;
-
-
+    
     @Builder
     public Item(String title, String content, int price, User seller){
         this.title = title;
@@ -80,34 +79,28 @@ public class Item {
         this.seller = seller;
     }
 
-    // 비즈니스 메서드
-    public void addGrade(Grade grade) {
-        this.gradeList.add(grade);
-    }
-
+    /**
+     * 비즈니스 메서드
+     */
+    
+    // 구매자 변경
     public void setBuyer(User buyer) {
         this.buyer = buyer;
     }
-
-    /**
-     * 아이템 정보 수정
-     */
-    public void modifyItem(ItemRequest item) {
+    
+    // 아이템 정보 수정
+    public void modifyItem(ModifyItemRequest item) {
         this.title = item.getTitle();
         this.content = item.getContent();
         this.price = item.getPrice();
     }
 
-    /**
-     * 아이템 상태 수정
-     */
+    // 상품 상세 수정
     public void setStatus(int status) {
         this.status = status;
     }
 
-    /**
-     * 조회수 올리기
-     */
+    // 조회수 올리기
     public void viewUp() {
         this.view++;
     }

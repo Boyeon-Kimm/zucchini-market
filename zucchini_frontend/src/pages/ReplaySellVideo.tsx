@@ -1,7 +1,32 @@
 import styled from "styled-components";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
+import api from "../utils/api";
+import ReactPlayer from "react-player";
 
 export default function ReplaySellVideo() {
+  const [video, setVideo] = useState();
+  const [title, setTitle] = useState("");
+
+  const location = useLocation();
+  const getVideo = async () => {
+    try {
+      const response = await api.get(
+        `video/${location.pathname.split("/")[4]}`
+      );
+      console.log(response.data.link);
+      setVideo(response.data.link);
+      setTitle(response.data.itemTitle);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  useEffect(() => {
+    getVideo();
+  }, []);
+
   return (
     <ContainerDiv
       initial={{ opacity: 0 }}
@@ -9,10 +34,15 @@ export default function ReplaySellVideo() {
       exit={{ opacity: 0 }}
     >
       <div>
-        <TitleSpan>
-          갤럭시 워치5 PRO 골드에디션 블랙 45MM 판매합니다(미개봉)
-        </TitleSpan>
-        <VideoScreenDiv></VideoScreenDiv>
+        <TitleSpan>{title}</TitleSpan>
+        <VideoScreenDiv>
+          <ReactPlayer
+            url={video}
+            controls // 재생 컨트롤 표시
+            width="100%"
+            height="100%"
+          />
+        </VideoScreenDiv>
       </div>
     </ContainerDiv>
   );
@@ -34,4 +64,8 @@ const VideoScreenDiv = styled.div`
 
 const TitleSpan = styled.span`
   font-size: 2rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  word-break: break-all;
 `;

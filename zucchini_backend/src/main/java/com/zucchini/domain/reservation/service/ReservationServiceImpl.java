@@ -2,6 +2,7 @@ package com.zucchini.domain.reservation.service;
 
 import com.zucchini.domain.conference.repository.ConferenceRepository;
 import com.zucchini.domain.conference.service.ConferenceService;
+import com.zucchini.domain.item.domain.Item;
 import com.zucchini.domain.item.domain.ItemDate;
 import com.zucchini.domain.item.repository.ItemDateRepository;
 import com.zucchini.domain.item.repository.ItemRepository;
@@ -17,6 +18,7 @@ import com.zucchini.domain.user.repository.UserRepository;
 import com.zucchini.global.domain.ReservationConfirmCode;
 import com.zucchini.global.domain.ReservationConfirmCodeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -32,70 +34,56 @@ public class ReservationServiceImpl implements ReservationService {
 
     // 예약 확인 유효 시간 1분
     private static final Long reservationConfirmExpiration = 1000L * 60;
-
     private final UserRepository userRepository;
     private final ReservationRepository reservationRepository;
     private final ConferenceRepository conferenceRepository;
     private final ItemDateRepository itemDateRepository;
     private final ItemRepository itemRepository;
     private final ReservationConfirmCodeRepository reservationConfirmCodeRepository;
-
     private final ItemService itemService;
     private final ConferenceService conferenceService;
 
     /**
      * 사용자의 모든 예약 내역 조회
+     *
+     * @return List<ReservationResponse> : 예약 내역 리스트
      */
     @Override
+    @Transactional(readOnly = true)
     public List<ReservationResponse> findReservationList() {
         String currentPrincipalId = getCurrentId();
         User user = userRepository.findById(currentPrincipalId).get();
-
-        // 모든 예약 목록 불러오고, 예약된 날짜와 예약 아이템의 이름 리스트를 반환함.
-        List<Reservation> reservationList = reservationRepository.findAllByUser(user);
+        Date now = new Date();
+        Date before1Hour = new Date(now.getTime() - 1000 * 60 * 60);
+        List<Reservation> reservationList = reservationRepository.findActiveReservationAllByUser(user, before1Hour);
         List<ReservationResponse> reservationResponseList = ReservationResponse.listOf(reservationList);
+
         return reservationResponseList;
     }
 
     /**
      * 예약 추가
-     * @param sellerId
-     * @param buyerId
-     * @param conferenceNo
-     */
-//    @Override
-//    public void addReservation(String sellerId, String buyerId, int conferenceNo) {
-//        User seller = userRepository.findById(sellerId).orElseThrow(() -> new NoSuchElementException("판매자가 존재하지 않습니다."));
-//        User buyer = userRepository.findById(buyerId).orElseThrow(() -> new NoSuchElementException("구매자가 존재하지 않습니다."));
-//        Conference conference = conferenceRepository.findById(conferenceNo).orElseThrow(() -> new NoSuchElementException("존재하지 않는 회의입니다."));
-//        List<Reservation> reservationList = new ArrayList<>();
-//
-//        Reservation reservation = Reservation.builder()
-//                .user(buyer)
-//                .conference(conference)
-//                .isSeller(false)
-//                .build();
-//        reservationList.add(reservation);
-//
-//        Reservation reservation2 = Reservation.builder()
-//                .user(seller)
-//                .conference(conference)
-//                .isSeller(true)
-//                .build();
-//        reservationList.add(reservation2);
-//
-//        reservationRepository.saveAll(reservationList);
-//    }
-
-    /**
-     * 예약 추가
+     *
+     * @param itemNo : 아이템 번호
+     * @param selectDate : 구매자가 선택한 예약 날짜
      */
     @Override
     public void addReservation(int itemNo, Date selectDate) {
-        // 예약 성공
-        // 컨퍼런스 생성 후 예약 생성 -> 논의해야 함
-        // 일단 해당 날짜로 컨퍼런스 생성 후 컨퍼런스에 대한 구매자, 판매자 예약 생성하는 방식으로 구현한 상태
+        // 내가 이미 이 아이템에 관한 예약이 존재하면 예약 안만들기
         String buyerId = getCurrentId();
+        User buyer = userRepository.findById(buyerId).orElseThrow(() -> new NoSuchElementException("구매자가 존재하지 않습니다."));
+
+
+        // 해당 아이템에 관한 구매자의 예약이 하나 이상 존재하는지 판별함
+        List<Reservation> count = reservationRepository.countReservationsByItemNoAndUser(itemNo, buyer);
+
+        if (!count.isEmpty()) {
+            throw new IllegalArgumentException("이미 예약한 아이템입니다.");
+        }
+
+        // 예약 성공
+        // 컨퍼런스 생성 후 예약 생성
+        // 일단 해당 날짜로 컨퍼런스 생성 후 컨퍼런스에 대한 구매자, 판매자 예약 생성하는 방식으로 구현한 상태
         int conferenceNo = conferenceService.addConference(itemNo, selectDate);
         Reservation buyerReservation = Reservation.builder()
                 .user(userRepository.findById(buyerId).get())
@@ -103,8 +91,11 @@ public class ReservationServiceImpl implements ReservationService {
                 // 구매자라서
                 .isSeller(false)
                 .build();
+
         // 쿼리 최적화...?
-        int sellerNo = itemRepository.findById(itemNo).get().getSeller().getNo();
+        Item item = itemRepository.findById(itemNo).orElseThrow(() -> new NoSuchElementException("존재하지 않는 아이템입니다."));
+        User seller = item.getSeller();
+        int sellerNo = seller.getNo();
         Reservation sellerReservation = Reservation.builder()
                 .user(userRepository.findById(sellerNo).get())
                 .conferenceNo(conferenceNo)
@@ -124,10 +115,13 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     /**
-     * 예약하려는 날짜 가능 여부 검사
-     * 예약 가능 -> 구매자가 등록한 판매 상품의 날짜 목록에 포함되는지 검사
-     * @param checkReservationRequest
-     * @return
+     * 구매자가 예약하려는 날짜 가능 여부를 확인함
+     *
+     * @param checkReservationRequest : 예약 검사 요청 객체
+     * @return CheckReservationResponse : 예약 가능 여부와 필요시 확인 코드 반환
+     * 구매자가 선택한 날짜가 예약이 아예 불가능한 경우는 status 0
+     * 구매자가 선택한 날짜가 구매자가 등록한 아이템의 날짜 목록에 포함되면 status 1 -> 프론트에 임시코드 반환
+     * 구매자가 선택한 날짜가 구매자가 등록한 아이템의 날짜 목록에 포함되지 않으면 status 2 -> 바로 예약 생성
      */
     @Override
     public CheckReservationResponse checkReservation(ReservationRequest checkReservationRequest) {
@@ -179,7 +173,9 @@ public class ReservationServiceImpl implements ReservationService {
 
 
     /**
-     * 예약 코드가 유효한지 검사 후 예약 생성으로 이동
+     * 예약 코드가 유효한지 검사 후 예약을 생성함
+     *
+     * @param confirmReservationRequest : 예약 코드와 예약 정보를 담은 요청 객체
      */
     @Override
     public void checkReservationConfirmCode(ConfirmReservationRequest confirmReservationRequest) {
@@ -195,9 +191,12 @@ public class ReservationServiceImpl implements ReservationService {
 
 
     /**
-     * 현재 로그인한 유저의 화상 예약된 날짜를 리턴함
+     * 현재 로그인한 유저의 화상 예약된 날짜를 조회함
+     *
+     * @return List<Date> : 화상 예약된 날짜 리스트
      */
     @Override
+    @Transactional(readOnly = true)
     public List<Date> findReservationDateList() {
         String currentPrincipalId = getCurrentId();
         User user = userRepository.findById(currentPrincipalId).get();
@@ -207,6 +206,11 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
 
+    /**
+     * 현재 로그인한 유저의 아이디를 조회함
+     *
+     * @return String : 현재 로그인한 유저의 아이디
+     */
     private String getCurrentId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails principal = (UserDetails) authentication.getPrincipal();

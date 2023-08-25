@@ -4,8 +4,13 @@ import ScheduleEach from "../components/Schedule/ScheduleEach";
 import axios from "axios";
 import Loading from "../components/Loading/Loading";
 import { motion } from "framer-motion";
+import { getUser } from "../hooks/useLocalStorage";
+import { BASE_URL } from "../constants/url";
+import dayjs from "dayjs";
 interface Item {
-  id: number;
+  title: string;
+  confirmedDate: string;
+  conferenceNo: number;
 }
 
 export default function ScheduleList() {
@@ -14,21 +19,24 @@ export default function ScheduleList() {
 
   const [items, setItems] = useState([]);
 
-  function getItems() {
-    axios.get(``).then((response) => {
-      setItems(response.data);
-    });
-  }
+  // function getItems() {
+  //   axios.get(``).then((response) => {
+  //     setItems(response.data);
+  //   });
+  // }
 
-  useEffect(() => {
-    getItems();
-  }, []);
+  // useEffect(() => {
+  //   getItems();
+  // }, []);
 
   useEffect(() => {
     setIsLoading(true);
+    const token = "Bearer " + getUser();
 
     axios
-      .get("http://localhost:8080/api/mypage/schedule")
+      .get(BASE_URL + "reservation", {
+        headers: { Authorization: token },
+      })
       .then((res) => {
         setData(res.data);
       })
@@ -51,6 +59,10 @@ export default function ScheduleList() {
     return <Loading />;
   }
 
+  // 오늘 날짜 출력
+  const time = Date.now();
+  const today = new Date(time);
+
   return (
     <ContainerDiv
       initial={{ opacity: 0 }}
@@ -63,12 +75,14 @@ export default function ScheduleList() {
         </TitleDiv>
         <div>
           <TodayDiv>
-            <p>Today : 2023-08-03</p>
+            <p>Today : {today.toLocaleDateString()}</p>
           </TodayDiv>
           {data && data.length > 0 ? (
-            data.map((item) => <ScheduleEach key={item.id} item={item} />)
+            data.map((item) => (
+              <ScheduleEach key={item.conferenceNo} item={item} />
+            ))
           ) : (
-            <p>일정이 없습니다.</p>
+            <AlertP>일정이 없습니다.</AlertP>
           )}
         </div>
       </ChatListDiv>
@@ -128,4 +142,8 @@ const TitleDiv = styled.div`
 const TodayDiv = styled.div`
   border-bottom: solid 2px #254021;
   padding-bottom: 0.5rem;
+`;
+
+const AlertP = styled.p`
+  margin-top: 1rem;
 `;

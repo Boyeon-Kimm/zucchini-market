@@ -10,22 +10,17 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface ItemCategoryRepository extends JpaRepository<ItemCategory, ItemCategoryId> {
+public interface ItemCategoryRepository extends JpaRepository<ItemCategory, ItemCategoryId>, ItemCategoryRepositoryCustom {
 
     /**
      * 카테고리에 해당하는 아이템 목록 조회
+     * @param category : 카테고리
+     * @return
      */
     @Query(value = "SELECT i FROM ItemCategory ic " +
             "JOIN ic.category c " +
             "JOIN ic.item i " +
             "WHERE c.category = :category")
     List<Item> findAllByCategory(String category);
-
-    /**
-     * 해당하는 아이템이 속한 카테고리 전부 삭제
-     */
-    @Modifying
-    @Query(value = "delete from ItemCategory ic where ic.id.itemNo = :itemNo")
-    void deleteByItemNo(@Param("itemNo") int itemNo);
 
 }

@@ -2,19 +2,37 @@ import styled from "styled-components";
 import Modal from "../components/Common/Modal";
 import { useEffect, useState } from "react";
 import SimpleCalendarRegister from "../components/Schedule/SimpleCalendarRegister";
-// import ImageUpload from "../FileUpload/ImageUpload";
-import DragDrop from "../FileUpload/DragDrop";
 import { useForm } from "react-hook-form";
 import { ErrorMessage } from "@hookform/error-message";
 import ClosedButton from "../components/Button/ClosedButton";
 import dayjs from "dayjs";
 import axios from "axios";
-import IFileTypes from "../types/IFileTypes";
 import { Button } from "../components/Common/Button";
 import useAuth from "../hooks/useAuth";
-import Calendar from "react-calendar";
-import { NumericFormat } from "react-number-format";
 import { motion } from "framer-motion";
+import api from "../utils/api";
+import { useNavigate } from "react-router";
+import { BASE_URL } from "../constants/url";
+import { useLocation } from "react-router-dom";
+
+interface IDate {
+  date: string;
+  status: number;
+}
+interface IItem {
+  no: number;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  content: string;
+  price: number;
+  status: number;
+  imageList: string[];
+  likeCount: number;
+  dateList: IDate[];
+  categoryList: string[];
+  view: number;
+}
 
 export default function UpdateItem() {
   const token = useAuth();
@@ -27,48 +45,34 @@ export default function UpdateItem() {
     mode: "onChange",
   });
 
+  const [item, setItem] = useState<IItem>();
+
   const [isOpen, setIsOpen] = useState(false);
 
-  const [files, setFiles] = useState<IFileTypes[]>([]);
   // 마우스로 선택한 날짜 받는 state
   const [clickedTime, setClickedTime] = useState(new Date());
 
   // 판매자가 선택한 시간들 차곡차곡 담아주기
   const [selectedTimes, setSelectedTimes] = useState<any>([]);
 
-  // 카테고리 전부
-  const [allCategories, setAllCategories] = useState([]);
-  // 선택한 카테고리
-  const [selectedCategories, setSelectedCategories] = useState<any>([]);
-  // 처음 렌더링될 때, 카테고리 가져올 거예영
+  const location = useLocation();
+  // 아이템 가져오기
   useEffect(() => {
-    const getCategories = async () => {
+    const getItem = async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/api/category`);
-        console.log(response);
-        setAllCategories(response.data.category);
+        const response = await api.get(
+          `item/${location.pathname.split("/")[2]}`
+        );
+        setItem(response.data);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
-    getCategories();
+    getItem();
   }, []);
 
   const toggle = () => {
     setIsOpen(!isOpen);
-    console.log("눌려?");
-  };
-
-  const onChange = (event: any) => {
-    if (!selectedCategories.includes(event.target.value)) {
-      setSelectedCategories([...selectedCategories, event.target.value]);
-    }
-  };
-
-  const discardCategory = (e: any) => {
-    let reselect;
-    [e.target.value, ...reselect] = selectedCategories;
-    setSelectedCategories(reselect);
   };
 
   const addTime = () => {
@@ -81,27 +85,41 @@ export default function UpdateItem() {
     // 30분 반올림하는 것도 추가해야대여....
     // gmt??tlqkf...
     setSelectedTimes([...selectedTimes, clickedTime]);
-    alert("추가되었습니다");
   };
 
+  // 선택한 시간 삭제
+  const removeTime = (timeToRemove: Date) => {
+    const updatedTimes = selectedTimes.filter(
+      (time: Date) => time !== timeToRemove
+    ); // 배열의 각 요소인 time(Date 객체)가 timeToRemove와 같지 않은지 검사
+    // 같지 않다면 true, 같으면 false 반환
+    // timeToRemove와 같지 않은 요소들만 남긴 새로운 배열 생성
+    setSelectedTimes(updatedTimes); // 새로운 배열 업데이트
+  };
+
+  const navigate = useNavigate();
   //진짜 제출
-  const onSubmit = (data: any) => {
-    alert(JSON.stringify(data));
+  const onSubmit = async (data: any) => {
+    console.log("등록등록");
     const formData = new FormData();
     formData.append("title", data.title);
     formData.append("content", data.content);
     formData.append("price", data.price);
-    formData.append("categoryList", data.category);
-    for (let i = 0; i < selectedCategories.length; i++) {
-      formData.append("categoryList", selectedCategories[i]);
-    }
+
+    // 일정들
     for (let i = 0; i < selectedTimes.length; i++) {
       formData.append("dateList", selectedTimes[i]);
     }
-  };
 
-  const check = () => {
-    console.log(errors);
+    const response = await api.put(`/item/${item?.no}`, {
+      title: data.title,
+      content: data.content,
+      price: data.price,
+      dateList: data.selectedTimes,
+    });
+
+    const item_no = response.data;
+    navigate(`/item/${item_no}`);
   };
 
   return (
@@ -112,42 +130,57 @@ export default function UpdateItem() {
     >
       <Modal isOpen={isOpen} toggle={toggle}>
         <ModalDiv>
-          <StyledSvg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            className="w-6 h-6"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </StyledSvg>
+          <ClosedButton onClick={toggle} />
         </ModalDiv>
         <ModalSpan>화상통화 일정 선택</ModalSpan>
         <CalendarDiv>
-          <Calendar
-            formatDay={(locale, date) =>
-              date.toLocaleString("en", { day: "numeric" })
-            }
+          <SimpleCalendarRegister
+            clickedTime={clickedTime}
+            setClickedTime={setClickedTime}
+            toggle={toggle}
           />
         </CalendarDiv>
-        <StyledBtn>확인</StyledBtn>
-        <StyledBtn>취소</StyledBtn>
+        <TimeContainerDiv>
+          {selectedTimes.map((selectedTime: Date) => {
+            const formattedTime = dayjs(selectedTime).format(
+              "YYYY년 MM월 DD일 HH시 mm분"
+            );
+            return (
+              <TimeDiv key={formattedTime}>
+                {formattedTime}
+                <TimeSvg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="red"
+                  className="w-6 h-6"
+                  onClick={() => removeTime(selectedTime)}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </TimeSvg>
+              </TimeDiv>
+            );
+          })}
+        </TimeContainerDiv>
+        <StyledBtn onClick={addTime}>추가</StyledBtn>
+        <StyledBtn onClick={() => toggle()}>완료</StyledBtn>
       </Modal>
-      <ContainerDiv>
-        <TitleSpan>판매글 수정</TitleSpan>
+      <ContainerForm onSubmit={handleSubmit(onSubmit)}>
+        <TitleSpan>내 물건 팔기</TitleSpan>
         <ContentDiv>
           <ContentSpan>제목</ContentSpan>
           <ContentInput
+            defaultValue={item?.title}
             {...register("title", {
-              required: "제목을 입력해주세요.",
-              maxLength: 200,
+              required: item?.title ? undefined : "제목을 입력해주세요.",
+              maxLength: 80,
             })}
-            maxLength={200}
+            maxLength={80}
           ></ContentInput>
           <StyledMessage>
             <ErrorMessage errors={errors} name="title" />
@@ -156,7 +189,11 @@ export default function UpdateItem() {
         <ContentDiv>
           <ContentSpan>상세 설명</ContentSpan>
           <ContentTextArea
-            {...register("content", { required: "설명을 입력해주세요." })}
+            defaultValue={item?.content}
+            maxLength={1000}
+            {...register("content", {
+              required: item?.content ? undefined : "설명을 입력해주세요.",
+            })}
           ></ContentTextArea>
           <StyledMessage>
             <ErrorMessage errors={errors} name="content" />
@@ -164,75 +201,38 @@ export default function UpdateItem() {
         </ContentDiv>
         <ContentDiv>
           <ContentSpan>가격</ContentSpan>
-          <StyledPrice
-            type="text"
-            placeholder=", 없이 입력해주세요"
-            thousandSeparator=","
-            suffix={" 원"}
-            {...register("price", { required: "가격을 입력해주세요" })}
-            onChange={check}
-          />
+          <ContentInput
+            type="number"
+            defaultValue={item?.price}
+            {...register("price", {
+              required: item?.price ? undefined : "가격을 입력해주세요",
+              pattern: {
+                value: /^[1-9]\d*$/,
+                message: "잘못된 값입니다.",
+              },
+            })}
+          ></ContentInput>
           <StyledMessage>
             <ErrorMessage errors={errors} name="price" />
           </StyledMessage>
         </ContentDiv>
-        <ContentDiv>
-          <ContentSpan>카테고리</ContentSpan>
-          {/* 카테고리 여러 개 선택은 나중에 생각할게요~^^ */}
-          <div>
-            {selectedCategories.map((category: any) => {
-              return (
-                <Button
-                  Size="extraSmall"
-                  Variant="filled"
-                  style={{
-                    padding: "8px",
-                    margin: "0.2rem",
-                    width: "8rem",
-                    borderRadius: "10px",
-                  }}
-                  onClick={discardCategory}
-                >
-                  {category}
-                </Button>
-              );
-            })}
-          </div>
-          <CategorySelect onChange={onChange}>
-            <option value="" disabled selected hidden>
-              물품의 종류를 선택해주세요
-            </option>
-            <option value="" disabled selected hidden>
-              카테고리
-            </option>
-            {allCategories.map((category) => {
-              return <option>{category}</option>;
-            })}
-          </CategorySelect>
-          <StyledMessage>
-            <ErrorMessage errors={errors} name="category" />
-          </StyledMessage>
-        </ContentDiv>
-        <ContentDiv>
-          <ContentSpan>사진 업로드</ContentSpan>
-          <DragDrop files={files} setFiles={setFiles} />
-        </ContentDiv>
         <ButtonDiv>
-          <StyledButton onClick={toggle}>일정 선택</StyledButton>
-          <StyledButton>수정 완료</StyledButton>
+          <StyledButton type="button" onClick={toggle}>
+            일정 선택
+          </StyledButton>
+          <StyledButton>등록</StyledButton>
         </ButtonDiv>
-      </ContainerDiv>
+      </ContainerForm>
     </ContainerAll>
   );
 }
 const ContainerAll = styled(motion.div)`
   display: flex;
   justify-content: center;
-  font-family: "IBM Plex Sans KR", sans-serif;
   /* padding: 5rem 0 13rem 0; */
 `;
 
-const ContainerDiv = styled.div`
+const ContainerForm = styled.form`
   display: flex;
   flex-direction: column;
   width: 35rem;
@@ -242,9 +242,10 @@ const ContainerDiv = styled.div`
 `;
 
 const TitleSpan = styled.span`
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 500;
-  margin: 1.5rem 0;
+  margin-bottom: 1rem;
+  margin-top: 1rem;
 `;
 
 const ContentDiv = styled.div`
@@ -256,39 +257,50 @@ const ContentDiv = styled.div`
 const ContentSpan = styled.span`
   color: #5a5a5a;
   margin-bottom: 0.4rem;
+  font-size: 0.9rem;
   font-size: 1rem;
 `;
 
 const ContentInput = styled.input`
   height: 2rem;
   width: 100%;
-  font-size: 1rem;
-  padding-left: 0.5rem;
+  padding-left: 0.7rem;
   border-radius: 0.4rem;
+  font-size: 1rem;
   border: transparent;
   background-color: #f4f4f4;
-
-  &::-webkit-inner-spin-button {
-    appearance: none;
-    -moz-appearance: none;
-    -webkit-appearance: none;
-  }
 
   &:focus {
     box-shadow: 0 0 10px #9ec4f2;
     outline: none;
     background-color: white;
   }
+
+  &::-webkit-inner-spin-button {
+    appearance: none;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+  }
+`;
+
+const StyledMessage = styled.div`
+  display: flex;
+  justify-content: start;
+  padding-left: 0.3;
+  margin: 0.3rem;
+  color: tomato;
 `;
 
 const ContentTextArea = styled.textarea`
   height: 12rem;
   width: 100%;
-  padding: 0.5rem;
-  font-size: 1rem;
   border-radius: 0.4rem;
   border: transparent;
+  font-size: 1rem;
+  padding-left: 0.7rem;
   background-color: #f4f4f4;
+  resize: none;
+  overflow-y: auto;
 
   &:focus {
     box-shadow: 0 0 10px #9ec4f2;
@@ -300,17 +312,8 @@ const ContentTextArea = styled.textarea`
 const CategorySelect = styled.select`
   height: 2rem;
   width: 100%;
-  font-size: 1rem;
-  padding-left: 0.5rem;
   border-radius: 0.4rem;
   color: #254021;
-`;
-
-const StyledSvg = styled.svg`
-  height: 1.5rem;
-  width: 1.5rem;
-  cursor: pointer;
-  color: #849c80;
 `;
 
 const ButtonDiv = styled.div`
@@ -327,6 +330,7 @@ const StyledButton = styled.button`
   background-color: #cde990;
   border: #cde990;
   color: #254021;
+  font-size: 1rem;
 
   &:hover {
     border: 2px solid #cde990;
@@ -360,39 +364,34 @@ const StyledBtn = styled.button`
   border-radius: 0.4rem;
   cursor: pointer;
   margin-right: 0.4rem;
+  margin-top: 1rem;
+  font-size: 1rem;
 
   &:hover {
     background-color: white;
   }
 `;
 
-const StyledMessage = styled.div`
+const TimeContainerDiv = styled.div`
   display: flex;
-  justify-content: start;
-  padding-left: 0.3;
-  margin: 0.3rem;
-  color: tomato;
-  font-size: 0.9rem;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 35rem;
 `;
 
-const StyledPrice = styled(NumericFormat)`
-  height: 2rem;
-  width: 100%;
-  font-size: 1rem;
-  padding-left: 0.5rem;
-  border-radius: 0.4rem;
-  border: transparent;
-  background-color: #f4f4f4;
+const TimeDiv = styled.div`
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  border: solid 1px black;
+  padding: 1rem;
+  width: 15rem;
+`;
 
-  &::-webkit-inner-spin-button {
-    appearance: none;
-    -moz-appearance: none;
-    -webkit-appearance: none;
-  }
-
-  &:focus {
-    box-shadow: 0 0 10px #9ec4f2;
-    outline: none;
-    background-color: white;
-  }
+const TimeSvg = styled.svg`
+  height: 1.3rem;
+  width: 1.3rem;
+  cursor: pointer;
 `;

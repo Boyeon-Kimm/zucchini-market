@@ -5,7 +5,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
@@ -20,7 +19,7 @@ public class Conference {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int no;
+    private Integer no;
 
     @Column(name = "is_active", nullable = false)
     private boolean active;
@@ -37,6 +36,15 @@ public class Conference {
         this.active = false;
         this.item = item;
         this.confirmedDate = date;
+    }
+
+    /**
+     * 비즈니스 메서드
+     */
+
+    // 컨퍼런스 세션 활성화 되면 true
+    public void setActive(){
+        this.active = true;
     }
 
 }

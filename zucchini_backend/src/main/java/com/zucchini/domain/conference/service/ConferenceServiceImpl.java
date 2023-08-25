@@ -2,6 +2,7 @@ package com.zucchini.domain.conference.service;
 
 import com.zucchini.domain.conference.domain.Conference;
 import com.zucchini.domain.conference.dto.FindConferenceResponse;
+import com.zucchini.domain.conference.dto.FindItemUserResponse;
 import com.zucchini.domain.conference.repository.ConferenceRepository;
 import com.zucchini.domain.item.domain.Item;
 import com.zucchini.domain.item.repository.ItemRepository;
@@ -33,8 +34,10 @@ public class ConferenceServiceImpl implements ConferenceService{
 
     /**
      * 회의 생성
-     * 성공시 생성된 회의의 번호와 201 코드 리턴
-     * 실패시 404, 500 코드 리턴
+     *
+     * @param itemNo      : 아이템 번호
+     * @param confirmDate : 화상 회의 확정 날짜
+     * @return int : 생성된 회의의 번호
      */
     @Override
     public int addConference(int itemNo, Date confirmDate) {
@@ -47,7 +50,9 @@ public class ConferenceServiceImpl implements ConferenceService{
 
     /**
      * 회의 조회
-     * 실제 화상 채팅 구현 안되어서 일단 API 명세서 그대로 구현
+     *
+     * @param conferenceNo : 회의 번호
+     * @return FindConferenceResponse : 회의 정보 반환
      */
     @Override
     @Transactional(readOnly = true)
@@ -57,16 +62,45 @@ public class ConferenceServiceImpl implements ConferenceService{
         // conference의 item 확인하고 현재 로그인한 유저가 seller나 buyer에 있지 않으면 예외처리
         String currentPrincipalId = getLoginUserId();
 
-        if (!currentPrincipalId.equals(conference.getItem().getSeller().getId()) == !currentPrincipalId.equals(conference.getItem().getBuyer().getId())) {
-            throw new UserException("회의를 조회할 권한이 없습니다.");
+        if (conference.getItem().getBuyer() == null) {
+            if (!currentPrincipalId.equals(conference.getItem().getSeller().getId())) {
+                throw new UserException("회의를 조회할 권한이 없습니다.");
+            }
+        } else {
+            if (!(currentPrincipalId.equals(conference.getItem().getSeller().getId()) || !currentPrincipalId.equals(conference.getItem().getBuyer().getId()))) {
+                throw new UserException("회의를 조회할 권한이 없습니다.");
+            }
         }
 
         return FindConferenceResponse.of(conference);
     }
 
     /**
+     * 회의 번호를 받아서 해당 회의의 아이템 번호와 해당 회의의 구매 예정자를 반환한다.
+     *
+     * @param conferenceNo : 회의 번호
+     * @return FindConferenceResponse : 회의 정보 반환
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public FindItemUserResponse findConferenceItemUser(int conferenceNo) {
+        Conference conference = getConferenceByNo(conferenceNo);
+
+        // 해당 conference와 연관된 reservation한 유저 이름중에 item에 seller로 등록되어 있지 않은 사람을 반환함
+        Reservation buyer = reservationRepository.findBuyerNameByConferenceNo(conferenceNo);
+
+        FindItemUserResponse findItemUserResponse = FindItemUserResponse.builder()
+                .itemNo(conference.getItem().getNo())
+                .username(buyer.getUser().getNickname())
+                .build();
+
+        return findItemUserResponse;
+    }
+
+    /**
      * 회의 삭제
-     * 회의 조회와 같음
+     *
+     * @param conferenceNo : 회의 번호
      */
     @Override
     public void removeConference(int conferenceNo) {
@@ -76,9 +110,8 @@ public class ConferenceServiceImpl implements ConferenceService{
 
     /**
      * 판매자의 예약 취소
-     * reservation에서 conference 조회하는 쿼리 날리고 conference의 confirmedDate와 같은 모든 date status를 0으로 변경함. 단 Date.item.seller or Date.item.buyer가 현 로그인한 유저와 같아야 함.
      *
-     * @param conferenceNo
+     * @param conferenceNo : 회의 번호
      */
     @Override
     public void cancelConference(int conferenceNo) {
@@ -102,17 +135,24 @@ public class ConferenceServiceImpl implements ConferenceService{
         conferenceRepository.delete(conference);
     }
 
+    /**
+     * 회의실 번호로 희의실 객체를 얻어옴
+     * @param conferenceNo
+     * @return Conference : 회의 객체
+     */
     private Conference getConferenceByNo(int conferenceNo) {
         return conferenceRepository.findById(conferenceNo)
                 .orElseThrow(() -> new NoSuchElementException("회의가 존재하지 않습니다."));
     }
 
+    /**
+     * 현재 로그인한 회원의 아이디를 얻어옴
+     * @return String : 회원 아이디
+     */
     private String getLoginUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails nowLogInDetail = (CustomUserDetails) auth.getPrincipal();
         return nowLogInDetail.getId();
     }
-
-
 
 }

@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Modal from "../Common/Modal";
 import { useState } from "react";
 import ClosedButton from "../Button/ClosedButton";
@@ -7,14 +7,25 @@ import FullWidthButton from "../Button/FullWidthButton";
 
 export default function Footer() {
   const [isOpen, setIsOpen] = useState(false);
+  const [modalText, setModalText] = useState("");
 
   const toggle = () => {
     setIsOpen(!isOpen);
+    setModalText(""); // 닫힐 때마다 모달 내용 초기화
   };
 
-  const navigate = useNavigate();
-  const goBack = () => {
-    navigate(-1);
+  const askClosed = () => {
+    if (modalText.trim() === "") {
+      return;
+    }
+
+    alert(
+      "애호박마켓에 문의해주셔서 감사합니다! \n답변은 이메일로 발송됩니다."
+    );
+    setIsOpen(!isOpen);
+
+    // 페이지 맨 위로 스크롤
+    window.scrollTo(0, 0);
   };
 
   return (
@@ -22,7 +33,7 @@ export default function Footer() {
       <ContainerDiv>
         <Modal isOpen={isOpen} toggle={toggle}>
           <ModalDiv>
-            <ClosedButton />
+            <ClosedButton onClick={toggle} />
           </ModalDiv>
           <ModalSpan>문의하기</ModalSpan>
           <SpanDiv>
@@ -36,11 +47,16 @@ export default function Footer() {
               <option>신고 / 이용제한</option>
               <option>기타</option>
             </ModalSelect>
-            <ModalTextarea placeholder="상세 내용을 입력해주세요.."></ModalTextarea>
+            <ModalTextarea
+              placeholder="상세 내용을 입력해주세요.."
+              value={modalText}
+              onChange={(e) => setModalText(e.target.value)}
+            ></ModalTextarea>
+            {modalText.trim() === "" && <AlertP>내용을 작성해주세요..</AlertP>}
           </SpanDiv>
           <ButtonDiv>
-            <FullWidthButton>문의</FullWidthButton>
-            <FullWidthButton onClick={goBack}>취소</FullWidthButton>
+            <FullWidthButton onClick={askClosed}>문의</FullWidthButton>
+            <FullWidthButton onClick={toggle}>취소</FullWidthButton>
           </ButtonDiv>
         </Modal>
         <FooterDiv>
@@ -117,8 +133,16 @@ const ModalTextarea = styled.textarea`
   border-radius: 0.4rem;
   padding: 0.5rem;
   font-size: 1rem;
+  resize: none;
 `;
 
 const LogoSpan = styled.span`
   color: gray;
+`;
+
+const AlertP = styled.p`
+  display: flex;
+  padding-left: 0.2rem;
+  color: tomato;
+  font-size: 0.9rem;
 `;

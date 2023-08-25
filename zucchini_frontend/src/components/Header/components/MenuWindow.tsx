@@ -2,20 +2,42 @@ import styled from "styled-components";
 import { motion } from "framer-motion";
 import MenuNavigation from "./MenuNavigation";
 import menuNavigation from "../constants/menuNavigation";
+import loggedOutNavigation from "../constants/loggedOutNavigaion";
 import Zucchini from "../../../assets/images/zucchini.png";
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
 
 interface IMenuProps {
   toggle: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function MenuWindow({ toggle }: IMenuProps) {
+  const location = useLocation();
+
+  //뒤로가기 버튼 등을 누를 때 메뉴윈도우가 사라지지 않는 현상 해소
+  const handleBackButton = () => {
+    toggle(false);
+  };
+  useEffect(() => {
+    // 뒤로가기 이벤트 리스너 등록
+    window.addEventListener("popstate", handleBackButton);
+
+    return () => {
+      // 컴포넌트 언마운트 시 이벤트 리스너 해제
+      window.removeEventListener("popstate", handleBackButton);
+    };
+  }, []);
+
+  // x버튼
   const clickExit = () => {
     toggle(false);
   };
 
+  // 각 메뉴로 이동 시
   const handleMenuItemClick = () => {
     toggle(false);
   };
+
   return (
     <MenuWindowContainer
       initial="closed"
@@ -31,20 +53,24 @@ export default function MenuWindow({ toggle }: IMenuProps) {
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
-          stroke-width="1.5"
+          strokeWidth="1.5"
           stroke="#254021"
           width="100%"
           height="100%"
         >
           <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
       </ExitButton>
       <StyledImg src={Zucchini} />
-      <MenuNavigation list={menuNavigation} onItemClick={handleMenuItemClick} />
+      <MenuNavigation
+        list={menuNavigation}
+        loggedOutList={loggedOutNavigation}
+        onItemClick={handleMenuItemClick}
+      />
     </MenuWindowContainer>
   );
 }
