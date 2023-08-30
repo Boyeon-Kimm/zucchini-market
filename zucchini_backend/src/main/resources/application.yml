@@ -29,9 +29,9 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      password: zucchini
-      username: zucchini
-    url: jdbc:mysql://i9a209.p.ssafy.io:3308/zucchini?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul&zeroDateTimeBehavior=convertToNull&rewriteBatchedStatements=true
+      password:
+      username:
+    url:
   data:
     web:
       pageable:
@@ -43,15 +43,15 @@ spring:
       enabled: "true"
   mail:
     host: smtp.gmail.com
-    port: 587
-    username: zucchini0209@gmail.com
-    password: hodjzqjksgtvamss
+    port:
+    username:
+    password:
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
   redis:
-    host: i9a209.p.ssafy.io
-    port: 6379
+    host:
+    port:
 logging:
   level:
     org:
@@ -76,20 +76,20 @@ server:
       charset: UTF-8
     contextPath: /api
   address: 0.0.0.0
-  port: "8200"
+  port: ""
   compression:
     enabled: "true"
     mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
 build:
   date: "@build.date@"
 jwt:
-  expiration: '1296000000'
-  cookieName: zucchiniCookie
-  secret: dyAeHubOOc8KaOfYB6XEQoEj1QzRlVgtjNL8PYs1A1tymZvvqkcEU7L1imkKHeDa
+  expiration: ""
+  cookieName:
+  secret:
 springfox:
   documentation:
     swagger:
-      use-model-v3: 'false'
+      use-model-v3: "false"
 openvidu:
-  url: 'https://i9a209.p.ssafy.io:8443'
-  secret: 'pikapikapikachu'
+  url: ""
+  secret: ""
